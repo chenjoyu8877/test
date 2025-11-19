@@ -87,6 +87,11 @@
           ]
         }
       ]
+    },
+    {
+      "name": "讀本 (外部載入)",
+      "type": "external_category", 
+      "path": "reader_config.json"
     }
   ]
 }
