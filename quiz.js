@@ -109,6 +109,7 @@ async function loadExternalConfig(path) {
     }
 }
 
+
 // --- 2. ⭐️ 非同步讀取 (處理多選邏輯) ⭐️ ---
 async function initializeQuiz() {
     // 1. 載入 config
@@ -221,7 +222,10 @@ async function initializeQuiz() {
     let listIdsToLoad = [];
     let modeConfig = null;
 
-    if (selectedIdsFromUrl) {
+    if (listName === 'MULTI_SELECT_ENTRY' && !selectedIdsFromUrl) {
+        // 這是 MULTI_SELECT_ENTRY 的初始點擊，不載入數據是預期行為，不需要繼續
+        listIdsToLoad = [];
+    } else if (selectedIdsFromUrl) {
         // 情況 A: 綜合測驗區的流程 (多選)
         listIdsToLoad = selectedIdsFromUrl.split(',');
         modeConfig = listConfig.modes.find(m => m.id === modeId);
@@ -233,34 +237,40 @@ async function initializeQuiz() {
         modeConfig = listConfig.modes.find(m => m.id === modeId);
     }
     
-    if (!modeConfig) { throw new Error(`找不到模式 ID: ${modeId}`); }
-
-    // 7. 設定全局變數
-    currentMode = modeConfig.type;
-    QUESTION_FIELD = modeConfig.q_field;
-    ANSWER_FIELD = modeConfig.a_field || '';
-    BACK_CARD_FIELDS = modeConfig.back_fields || [];
+    if (!modeConfig && listName !== 'MULTI_SELECT_ENTRY') { throw new Error(`找不到模式 ID: ${modeId}`); }
+    
+    if (modeConfig) {
+        // 7. 設定全局變數 (如果 modeConfig 存在)
+        currentMode = modeConfig.type;
+        QUESTION_FIELD = modeConfig.q_field;
+        ANSWER_FIELD = modeConfig.a_field || '';
+        BACK_CARD_FIELDS = modeConfig.back_fields || [];
+    }
+    
     
     // 8. 載入單字庫數據 (數據合併核心)
     vocabulary = [];
-    for (const id of listIdsToLoad) {
-        try {
-            const filePath = `words/${id}.json?v=${new Date().getTime()}`;
-            console.log(`嘗試載入單字庫檔案: ${filePath}`); // 診斷輸出
-            const response = await fetch(filePath); 
-            if (!response.ok) { 
-                console.error(`無法讀取 ${id}.json 檔案。HTTP 狀態碼: ${response.status}`); 
-                continue; 
+    if (listIdsToLoad.length > 0) {
+        for (const id of listIdsToLoad) {
+            try {
+                const filePath = `words/${id}.json?v=${new Date().getTime()}`;
+                console.log(`嘗試載入單字庫檔案: ${filePath}`); 
+                const response = await fetch(filePath); 
+                if (!response.ok) { 
+                    console.error(`無法讀取 ${id}.json 檔案。HTTP 狀態碼: ${response.status}`); 
+                    continue; 
+                }
+                const listData = await response.json();
+                vocabulary.push(...listData); 
+            } catch (e) {
+                console.error(`載入 ${id}.json 失敗 (網路或解析錯誤):`, e);
             }
-            const listData = await response.json();
-            vocabulary.push(...listData); 
-        } catch (e) {
-            console.error(`載入 ${id}.json 失敗 (網路或解析錯誤):`, e);
         }
     }
 
+
     if (vocabulary.length > 0) {
-        console.log(`成功載入 ${vocabulary.length} 條單字數據。`); // 診斷輸出
+        console.log(`成功載入 ${vocabulary.length} 條單字數據。`); 
         
         // ⭐️ 9. 設定所有「返回」按鈕的連結 (修正返回邏輯) ⭐️
         let targetUrl;
@@ -339,8 +349,9 @@ async function initializeQuiz() {
             };
         }
     } else {
+        // 如果是 MULTI_SELECT_ENTRY 的初始點擊，則應由 5. 邏輯處理，不應走到這裡。
         mainArea.style.display = 'flex';
-        mainArea.innerHTML = `<h1>找不到單字數據，請檢查選單字庫。</h1><a href="index.html" class="home-button">返回主頁面</a>`;
+        mainArea.innerHTML = `<h1>找不到單字數據，請檢查選單字庫是否為空，或路徑錯誤。</h1><a href="index.html" class="home-button">返回主頁面</a>`;
     }
 }
 // ---------------------------------
