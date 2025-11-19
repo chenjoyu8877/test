@@ -9,14 +9,11 @@ const mcqOptionsArea = document.getElementById('mcq-options-section');
 const examProgress = document.getElementById('exam-progress-bar');
 const operationToggle = document.getElementById('operation-toggle');
 
-const giveUpButton = document.getElementById('give-up-button');
-
-
 // 獲取「區域」元素
 const modeChoiceArea = document.getElementById('mode-choice-area');
 const practiceExamChoiceArea = document.getElementById('practice-exam-choice-area');
 const examSetupArea = document.getElementById('exam-setup-area'); 
-const mainArea = document.getElementById('quiz-main-area'); // 獲取 mainArea 元素
+const mainArea = document.getElementById('quiz-main-area'); 
 const resultsArea = document.getElementById('exam-results-area');
 
 // 獲取「按鈕」和「標題」
@@ -27,6 +24,9 @@ const examSetupTitle = document.getElementById('exam-setup-title');
 const startPracticeBtn = document.getElementById('start-practice-btn');
 const startExamSetupBtn = document.getElementById('start-exam-setup-btn');
 const startExamFinalBtn = document.getElementById('start-exam-final-btn');
+
+// 獲取「我不會」按鈕
+const giveUpButton = document.getElementById('give-up-button');
 
 // 獲取多選區塊元素
 const multiSelectArea = document.getElementById('multi-select-area');
@@ -42,6 +42,10 @@ const multiModeButtonContainer = document.getElementById('multi-mode-button-cont
 // 獲取單列表摘要元素
 const singleListSummary = document.getElementById('single-list-summary');
 
+// 獲取自訂輸入元素
+const qCustomRadio = document.getElementById('qCustomRadio');
+const qCustomInput = document.getElementById('qCustomInput');
+
 
 // 考試模式變數
 let isExamMode = false;
@@ -51,9 +55,9 @@ let examIncorrectCount = 0;
 let testedIndices = new Set();
 let currentCardMarkedWrong = false;
 
-// ⭐️ 儲存錯題的單字數據 ⭐️
+// 儲存錯題的單字數據
 let examIncorrectWords = []; 
-let currentCardData = {}; // 儲存當前卡片數據
+let currentCardData = {}; 
 
 // 全局變數
 let QUESTION_FIELD = '';
@@ -70,13 +74,12 @@ let touchStartY = 0;
 let allListConfigs = {}; 
 let selectedListIDs = []; 
 let multiSelectEntryConfig = null;
-let config = null; // 儲存 config.json 數據
+let config = null; 
 
-// ⭐️ 輔助函式：遞迴收集所有 list ID
+// 輔助函式：遞迴收集所有 list ID
 function findListById(items) {
     if (!items) return;
     for (const item of items) {
-        // 修正：收集所有 list/category 配置
         allListConfigs[item.id] = item; 
         if (item.type === 'category') {
             findListById(item.items);
@@ -84,23 +87,20 @@ function findListById(items) {
     }
 }
 
-// 輔助函式：正規化字串 (已修正，忽略波浪符號)
+// 輔助函式：正規化字串
 function normalizeString(str) {
     if (typeof str !== 'string') str = String(str);
     if (!str) return "";
-    
-    // 將全形波浪號 (～) 和半形波浪號 (~) 都移除
     return str.replace(/～/g, '').replace(/~/g, '').replace(/・/g, '').replace(/\./g, '').replace(/\s/g, '');
 }
 
-// ⭐️ 輔助函式：異步載入外部 JSON 檔案 ⭐️
+// 輔助函式：異步載入外部 JSON 檔案
 async function loadExternalConfig(path) {
     try {
-        // 使用時間戳防止快取
         const response = await fetch(path + '?v=' + new Date().getTime());
         if (!response.ok) {
             console.error(`無法讀取外部配置: ${path}`, response.statusText);
-            return []; // 載入失敗時返回空陣列
+            return []; 
         }
         return await response.json();
     } catch (error) {
@@ -124,7 +124,7 @@ async function initializeQuiz() {
         return;
     }
     
-    // ⭐️ 2. 載入並合併外部配置 (FIX for modular config) ⭐️
+    // 2. 載入並合併外部配置
     let initialConfig = config; 
     let finalCatalog = [];
     
@@ -137,9 +137,9 @@ async function initializeQuiz() {
             finalCatalog.push(item);
         }
     }
-    initialConfig.catalog = finalCatalog; // 覆寫 config.catalog
+    initialConfig.catalog = finalCatalog; 
     
-    // ⭐️ 3. 收集所有列表配置 (用於多選)
+    // 3. 收集所有列表配置
     allListConfigs = {};
     if (initialConfig.catalog) {
         initialConfig.catalog.forEach(item => findListById([item]));
@@ -168,7 +168,7 @@ async function initializeQuiz() {
             window.location.href = 'index.html'; 
             return;
         }
-
+        // 顯示一般模式選擇按鈕... (略，保持原樣)
         modeChoiceTitle.textContent = `${listConfig.name} - 選擇模式`;
         let buttonHtml = '';
         if (listConfig.modes && Array.isArray(listConfig.modes)) {
@@ -186,12 +186,10 @@ async function initializeQuiz() {
         modeButtonContainer.addEventListener('click', (event) => {
             const button = event.target.closest('.option-button');
             if (!button) return;
-            
             const chosenModeId = button.dataset.modeId;
             const url = `quiz.html?list=${listName}&mode_id=${chosenModeId}`;
             window.location.href = url;
         });
-        
         modeChoiceArea.style.display = 'block';
         return;
     }
@@ -204,130 +202,111 @@ async function initializeQuiz() {
         return; 
     }
     
-    // ⭐️ 5.5. 綜合測驗區的返回和繼續流程 (修復 state loss 導致的返回問題) ⭐️
+    // ⭐️ 5.5. 綜合測驗區的返回和繼續流程 ⭐️
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'RESUME_MULTI') {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
-        // 重新設置 selectedListIDs (從 URL 參數中獲取丟失的狀態)
         const selectedIdsFromUrl = params.get('selected_ids');
         if (selectedIdsFromUrl) {
             selectedListIDs = selectedIdsFromUrl.split(',');
         }
-        setupMultiModeChoice(); // 直接跳轉到模式選擇頁
+        setupMultiModeChoice();
         return; 
     }
     
-    // ⭐️ 6. 多選流程的最終啟動 或 既有單一列表流程 ⭐️
+    // ⭐️ 6. 決定要載入的數據 (核心修正處) ⭐️
     const selectedIdsFromUrl = params.get('selected_ids');
     let listIdsToLoad = [];
     let modeConfig = null;
 
-    if (listName === 'MULTI_SELECT_ENTRY' && !selectedIdsFromUrl) {
-        // 這是 MULTI_SELECT_ENTRY 的初始點擊，不載入數據是預期行為，不需要繼續
-        listIdsToLoad = [];
-    } else if (selectedIdsFromUrl) {
-        // 情況 A: 綜合測驗區的流程 (多選)
+    if (selectedIdsFromUrl) {
+        // 情況 A: 綜合測驗區的流程 (多選) - 已有選定 ID
         listIdsToLoad = selectedIdsFromUrl.split(',');
         modeConfig = listConfig.modes.find(m => m.id === modeId);
-        // 確保 multiSelectEntryConfig 被設置
         multiSelectEntryConfig = listConfig;
-    } else {
-        // 情況 B: 既有的單一列表啟動流程
+    } else if (listName !== 'MULTI_SELECT_ENTRY') {
+        // 情況 B: 普通單一列表 (不是綜合測驗入口)
         listIdsToLoad = [listName];
         modeConfig = listConfig.modes.find(m => m.id === modeId);
+    } else {
+        // ⭐️ 情況 C: 錯誤狀態 - 是 MULTI_SELECT_ENTRY 但沒有 selected_ids ⭐️
+        // 這表示程式意外掉進了這裡，應該強制導回選擇畫面，而不是嘗試載入 MULTI_SELECT_ENTRY.json
+        console.warn("檢測到綜合測驗入口但無選定列表，重導向至選擇畫面...");
+        multiSelectEntryConfig = listConfig;
+        hideAllSetupAreas();
+        setupMultiSelect();
+        return; // 🛑 停止執行，防止 404 錯誤
     }
     
-    if (!modeConfig && listName !== 'MULTI_SELECT_ENTRY') { throw new Error(`找不到模式 ID: ${modeId}`); }
+    if (!modeConfig) { throw new Error(`找不到模式 ID: ${modeId}`); }
+
+    // 7. 設定全局變數
+    currentMode = modeConfig.type;
+    QUESTION_FIELD = modeConfig.q_field;
+    ANSWER_FIELD = modeConfig.a_field || '';
+    BACK_CARD_FIELDS = modeConfig.back_fields || [];
     
-    if (modeConfig) {
-        // 7. 設定全局變數 (如果 modeConfig 存在)
-        currentMode = modeConfig.type;
-        QUESTION_FIELD = modeConfig.q_field;
-        ANSWER_FIELD = modeConfig.a_field || '';
-        BACK_CARD_FIELDS = modeConfig.back_fields || [];
-    }
-    
-    
-    // 8. 載入單字庫數據 (數據合併核心)
+    // 8. 載入單字庫數據
     vocabulary = [];
-    if (listIdsToLoad.length > 0) {
-        for (const id of listIdsToLoad) {
-            try {
-                const filePath = `words/${id}.json?v=${new Date().getTime()}`;
-                console.log(`嘗試載入單字庫檔案: ${filePath}`); 
-                const response = await fetch(filePath); 
-                if (!response.ok) { 
-                    console.error(`無法讀取 ${id}.json 檔案。HTTP 狀態碼: ${response.status}`); 
-                    continue; 
-                }
-                const listData = await response.json();
-                vocabulary.push(...listData); 
-            } catch (e) {
-                console.error(`載入 ${id}.json 失敗 (網路或解析錯誤):`, e);
+    for (const id of listIdsToLoad) {
+        try {
+            const filePath = `words/${id}.json?v=${new Date().getTime()}`;
+            const response = await fetch(filePath); 
+            if (!response.ok) { 
+                console.error(`無法讀取 ${id}.json 檔案。HTTP 狀態碼: ${response.status}`); 
+                continue; 
             }
+            const listData = await response.json();
+            vocabulary.push(...listData); 
+        } catch (e) {
+            console.error(`載入 ${id}.json 失敗:`, e);
         }
     }
-
 
     if (vocabulary.length > 0) {
-        console.log(`成功載入 ${vocabulary.length} 條單字數據。`); 
-        
-        // ⭐️ 9. 設定所有「返回」按鈕的連結 (修正返回邏輯) ⭐️
+        // 9. 設定返回按鈕連結
         let targetUrl;
-        
         if (selectedIdsFromUrl) {
-            // 情況 A: 綜合測驗區的任何模式，返回 RESUME_MULTI
             targetUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIdsFromUrl}`;
         } else if (currentMode === 'review') {
-            // 情況 B: 單一列表 Review 模式，返回模式選擇頁
             targetUrl = `quiz.html?list=${listName}`;
         } else {
-            // 情況 C: 單一列表 Quiz/MCQ 模式，返回練習/考試選擇頁
             targetUrl = `quiz.html?list=${listName}&mode_id=${modeId}`;
         }
-        
         const returnButtons = document.querySelectorAll('.button-return');
         returnButtons.forEach(btn => btn.href = targetUrl);
 
-        // 10. 顯示模式選擇或考試設定
+        // 10. 顯示 UI
         modeChoiceArea.style.display = 'none';
         
         if (currentMode === 'review') {
-            // --- 進入練習流程 (Review 模式) ---
             isExamMode = false;
             examSetupArea.style.display = 'none'; 
             practiceExamChoiceArea.style.display = 'none';
             modeChoiceArea.style.display = 'none'; 
             mainArea.style.display = 'flex'; 
-            setupApp(); // 直接開始練習
+            setupApp(); 
         } else {
-            isExamMode = false; // 預設為練習模式
+            isExamMode = false; 
             practiceExamChoiceArea.style.display = 'block';
             practiceExamTitle.textContent = `${listConfig.name} - ${modeConfig.name}`;
             
-            // ⭐️ 注入已選單字庫摘要 ⭐️
             if (singleListSummary) {
                 let summaryText = "";
                 if (selectedIdsFromUrl) {
-                    // 綜合測驗區的摘要 (從 listIdsToLoad 獲取)
                     const names = listIdsToLoad.map(id => allListConfigs[id] ? allListConfigs[id].name : id).join('、');
                     summaryText = `已選單字庫: ${names}`;
                 } else {
-                    // 單一列表的摘要
                     summaryText = `已選單字庫: ${listConfig.name}`;
                 }
                 singleListSummary.textContent = summaryText;
             }
 
-
-            // ⭐️ FIX 1: 設置 practiceExamChoiceArea 的返回按鈕連結 ⭐️
             const practiceExamReturnBtn = practiceExamChoiceArea.querySelector('.button-return');
             if (practiceExamReturnBtn) {
-                 // 單一列表返回模式選擇頁 (不帶 mode_id)
                 practiceExamReturnBtn.href = `quiz.html?list=${listName}`;
             }
 
-            // 處理練習與考試按鈕
             startPracticeBtn.onclick = () => {
                 isExamMode = false;
                 practiceExamChoiceArea.style.display = 'none';
@@ -341,7 +320,6 @@ async function initializeQuiz() {
                 examSetupTitle.textContent = `${listConfig.name} - ${modeConfig.name} 考試設定`;
                 startExamFinalBtn.onclick = startGame;
                 
-                // ⭐️ FIX 2: 確保考試設定頁的返回按鈕指向練習/考試選擇區 ⭐️
                 const examSetupReturnBtn = examSetupArea.querySelector('.button-return');
                 if (examSetupReturnBtn) {
                     examSetupReturnBtn.href = targetUrl;
@@ -349,14 +327,14 @@ async function initializeQuiz() {
             };
         }
     } else {
-        // 如果是 MULTI_SELECT_ENTRY 的初始點擊，則應由 5. 邏輯處理，不應走到這裡。
         mainArea.style.display = 'flex';
-        mainArea.innerHTML = `<h1>找不到單字數據，請檢查選單字庫是否為空，或路徑錯誤。</h1><a href="index.html" class="home-button">返回主頁面</a>`;
+        mainArea.innerHTML = `<h1>找不到單字數據。</h1><p>請確認單字庫檔案 (words/${listIdsToLoad.join(', ')}.json) 是否存在。</p><a href="index.html" class="home-button">返回主頁面</a>`;
     }
 }
-// ---------------------------------
 
-// ⭐️ 輔助函式：隱藏所有設定區域 ⭐️
+// ... (後續的 setupMultiSelect, setupMultiModeChoice, startGame, setupApp 等函式保持不變) ...
+// ⭐️ 請保留之前提供的所有輔助函式和邏輯，以上是 initializeQuiz 的完整修正 ⭐️
+
 function hideAllSetupAreas() {
     modeChoiceArea.style.display = 'none';
     practiceExamChoiceArea.style.display = 'none';
@@ -366,7 +344,6 @@ function hideAllSetupAreas() {
     if(multiModeChoiceArea) multiModeChoiceArea.style.display = 'none';
 }
 
-// ⭐️ 新增函式：第一步 - 單字庫列表選擇 (setupMultiSelect) ⭐️
 function setupMultiSelect() {
     hideAllSetupAreas();
     multiSelectArea.style.display = 'block';
@@ -398,7 +375,6 @@ function setupMultiSelect() {
     updateMultiSelectState();
 }
 
-// ⭐️ 輔助函式：更新多選狀態
 function updateMultiSelectState() {
     const checkedBoxes = document.querySelectorAll('#list-checkbox-container input[name="multi-list"]:checked');
     selectedListIDs = Array.from(checkedBoxes).map(cb => cb.value);
@@ -407,12 +383,9 @@ function updateMultiSelectState() {
     nextToModeSelectionBtn.disabled = selectedListIDs.length === 0;
 }
 
-
-// ⭐️ 新增函式：第二步 - 選擇測驗模式 (setupMultiModeChoice) ⭐️
 function setupMultiModeChoice() {
     multiModeChoiceArea.style.display = 'block';
     
-    // ⭐️ FIX: 當 selectedListIDs 為空時，嘗試從 URL 讀取狀態 ⭐️
     if (selectedListIDs.length === 0) {
         const params = new URLSearchParams(window.location.search);
         const selectedIdsFromUrl = params.get('selected_ids');
@@ -424,12 +397,11 @@ function setupMultiModeChoice() {
     const summaryNames = selectedListIDs.map(id => allListConfigs[id] ? allListConfigs[id].name : id).join('、');
     selectedListsSummary.textContent = summaryNames;
 
-    // 設置返回按鈕
     const returnButton = multiModeChoiceArea.querySelector('.button-return-to-select-list');
     returnButton.onclick = (event) => {
-        event.preventDefault(); // 阻止預設的 a href="#" 行為
+        event.preventDefault(); 
         hideAllSetupAreas();
-        setupMultiSelect(); // 返回列表選擇
+        setupMultiSelect(); 
     };
 
     multiModeButtonContainer.innerHTML = '';
@@ -443,8 +415,6 @@ function setupMultiModeChoice() {
 
             button.onclick = (event) => {
                 const finalModeId = event.target.dataset.modeId;
-                
-                // 重新導向到一個新的 URL，讓 initializeQuiz 重新啟動，並進入數據載入
                 const url = `quiz.html?list=${multiSelectEntryConfig.id}&mode_id=${finalModeId}&selected_ids=${selectedListIDs.join(',')}`;
                 window.location.href = url;
             };
@@ -453,19 +423,15 @@ function setupMultiModeChoice() {
     });
 }
 
-
-// --- 3. ⭐️ 啟動遊戲 (原 "startGame") ⭐️ ---
 function startGame() {
     examSetupArea.style.display = 'none'; 
     mainArea.style.display = 'flex'; 
 
     const selectedLength = document.querySelector('input[name="exam-length"]:checked').value;
     
-    // ⭐️ 修正：處理自訂輸入邏輯 ⭐️
     if (selectedLength === 'all') {
         examTotalQuestions = vocabulary.length;
     } else if (selectedLength === 'custom') {
-        // 讀取自訂輸入框的值
         let customValue = parseInt(qCustomInput.value);
         if (isNaN(customValue) || customValue <= 0) {
             alert('請輸入有效的自訂題數！');
@@ -488,14 +454,11 @@ function startGame() {
     testedIndices.clear();
     updateExamProgress();
     
-    // ⭐️ 重置錯題紀錄 ⭐️
     examIncorrectWords = [];
     
     setupApp();
 }
 
-
-// --- 4. 設置主要功能 (原 "setupApp") ---
 function setupApp() {
     flashcard.addEventListener('click', flipCard);
     nextButton.addEventListener('click', handleButtonPress);
@@ -507,10 +470,9 @@ function setupApp() {
         cardContainer.addEventListener('touchend', handleTouchEnd, false);
     }
     
-    // ⭐️ 修正：將監聽器綁定到 document 級別 (最穩定的選擇) ⭐️
+    // 綁定鍵盤事件到 document
     document.addEventListener('keydown', handleGlobalKey);
     
-    // ⭐️ 綁定「我不會」按鈕事件 ⭐️
     if (giveUpButton) {
         giveUpButton.addEventListener('click', revealAnswer);
     }
@@ -519,7 +481,6 @@ function setupApp() {
         if(quizInputArea) quizInputArea.style.display = 'block';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
         
-        // 顯示「我不會」按鈕
         if(giveUpButton) giveUpButton.style.display = 'inline-block';
         
         const answerLabelData = BACK_CARD_FIELDS.find(f => f.key === ANSWER_FIELD);
@@ -531,8 +492,8 @@ function setupApp() {
     } else if (currentMode === 'mcq') {
         if(quizInputArea) quizInputArea.style.display = 'none';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'grid'; 
-        if(giveUpButton) giveUpButton.style.display = 'none'; // MCQ 模式不需要「我不會」
-    } else { // review 模式
+        if(giveUpButton) giveUpButton.style.display = 'none'; 
+    } else { 
         if(quizInputArea) quizInputArea.style.display = 'none';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
         if(giveUpButton) giveUpButton.style.display = 'none';
@@ -548,8 +509,6 @@ function toggleOperationNotes() {
     }
 }
 
-
-// --- 5. ⭐️ 顯示新卡片 (已升級考試邏輯) ⭐️ ---
 async function loadNextCard() {
     if (isExamMode && examCurrentQuestion >= examTotalQuestions) {
         showExamResults();
@@ -562,7 +521,7 @@ async function loadNextCard() {
     }
     
     let card;
-    let newIndex = currentCardIndex; // 默認使用當前索引
+    let newIndex = currentCardIndex;
 
     if (isExamMode) {
         examCurrentQuestion++;
@@ -591,7 +550,6 @@ async function loadNextCard() {
     card = vocabulary[newIndex];
     if (!card) return; 
 
-    // ⭐️ 儲存目前卡片的完整數據，以便錯題紀錄使用 ⭐️
     currentCardData = card;
 
     cardFront.textContent = card[QUESTION_FIELD] || "";
@@ -620,20 +578,19 @@ async function loadNextCard() {
         nextButton.textContent = "檢查答案"; 
         nextButton.disabled = false;
         if (answerInput) answerInput.focus(); 
-        if (giveUpButton) giveUpButton.style.display = 'inline-block'; // 啟用「我不會」
+        if (giveUpButton) giveUpButton.style.display = 'inline-block'; 
         
     } else if (currentMode === 'mcq') {
         generateMcqOptions();
         nextButton.textContent = "下一張"; 
         nextButton.disabled = true; 
         
-    } else { // review 模式
+    } else { 
         nextButton.textContent = "顯示答案"; 
         nextButton.disabled = false;
     }
 }
 
-// --- 6. ⭐️ 檢查答案 (已升級考試邏輯) ⭐️ ---
 function checkAnswer() {
     const userInputRaw = answerInput.value.trim();
     if (!userInputRaw) {
@@ -644,7 +601,6 @@ function checkAnswer() {
 
     const normalizedInput = normalizeString(userInputRaw);
     
-    // ⭐️ 修正：支持多重答案比對 ⭐️
     let isCorrect = false;
     let correctAnswers = currentCorrectAnswer.split('/').map(s => s.trim());
     
@@ -653,18 +609,15 @@ function checkAnswer() {
     });
     
     if (isCorrect) {
-        // 為了顯示正確，我們使用第一個正確答案填入
         answerInput.value = correctAnswers[0].trim();
-        
         answerInput.classList.add('correct');
         answerInput.classList.remove('incorrect');
         answerInput.disabled = true; 
         nextButton.textContent = "下一張"; 
         nextButton.disabled = false;
-        if (giveUpButton) giveUpButton.style.display = 'none'; // 隱藏「我不會」按鈕
+        if (giveUpButton) giveUpButton.style.display = 'none'; 
         flipCard(); 
     } else {
-        // 錯誤輸入後，顯示「我不會」按鈕
         answerInput.classList.add('incorrect');
         answerInput.classList.remove('correct');
         answerInput.classList.add('shake');
@@ -673,43 +626,34 @@ function checkAnswer() {
         if (isExamMode && !currentCardMarkedWrong) {
             examIncorrectCount++;
             currentCardMarkedWrong = true;
-            updateExamProgress();
-            
-            // ⭐️ 紀錄錯題 ⭐️
             examIncorrectWords.push({ 
                 question: currentCardData[QUESTION_FIELD], 
                 answer: currentCorrectAnswer 
             });
         }
         
-        // ⭐️ 錯誤後顯示「我不會」按鈕，讓用戶可以跳過 ⭐️
         if (giveUpButton) giveUpButton.style.display = 'inline-block';
     }
 }
 
-// ⭐️ 新增函式：直接顯示答案（處理「我不會」按鈕點擊） ⭐️
 function revealAnswer() {
     if (currentMode === 'quiz' && !flashcard.classList.contains('is-flipped')) {
         
-        // 如果是考試模式且尚未標記錯誤，則紀錄錯題
         if (isExamMode && !currentCardMarkedWrong) {
             examIncorrectCount++;
             currentCardMarkedWrong = true;
             updateExamProgress();
             
-            // ⭐️ 紀錄錯題 ⭐️
             examIncorrectWords.push({ 
                 question: currentCardData[QUESTION_FIELD], 
                 answer: currentCorrectAnswer 
             });
         }
         
-        // 顯示答案
-        answerInput.value = currentCorrectAnswer.split('/')[0].trim(); // 顯示第一個答案
+        answerInput.value = currentCorrectAnswer.split('/')[0].trim(); 
         answerInput.classList.remove('incorrect');
         answerInput.disabled = true;
         
-        // 翻卡並調整按鈕狀態
         flipCard();
         nextButton.textContent = "下一張";
         nextButton.disabled = false;
@@ -718,26 +662,23 @@ function revealAnswer() {
 }
 
 
-// --- 7. 處理按鈕點擊 (修正 review 模式下的按鈕狀態變更時機) ---
 function handleButtonPress() {
     const buttonState = nextButton.textContent;
 
     if (currentMode === 'quiz') {
         if (buttonState === "檢查答案") {
             checkAnswer();
-        } else { // buttonState === "下一張"
+        } else { 
             loadNextCard();
         }
     } else if (currentMode === 'review') {
         if (buttonState === "顯示答案") {
             flipCard();
-            
-            // 修正邏輯：如果成功翻轉到背面，才將按鈕設為「下一張」
             if (flashcard.classList.contains('is-flipped')) {
                 nextButton.textContent = "下一張";
             }
 
-        } else { // buttonState === "下一張"
+        } else { 
             loadNextCard(); 
         }
     } else if (currentMode === 'mcq') {
@@ -745,13 +686,9 @@ function handleButtonPress() {
     }
 }
 
-// --- 8. ⭐️ 處理 Enter / Shift 鍵 (移除 QWER 邏輯) ⭐️ ---
 function handleGlobalKey(event) {
-    // console.log("Key pressed: ", event.key, "Mode: ", currentMode, "Code: ", event.code); 
-    
     const isTyping = (currentMode === 'quiz' && document.activeElement === answerInput);
 
-    // 1. "Enter" 鍵
     if (event.key === 'Enter') {
         event.preventDefault();
         
@@ -765,8 +702,29 @@ function handleGlobalKey(event) {
         }
         return; 
     }
+    
+    if (currentMode === 'mcq' && !nextButton.disabled) {
+        const keyMap = {
+            'q': 0, 'w': 1, 'e': 2, 'r': 3,
+            'Q': 0, 'W': 1, 'E': 2, 'R': 3,
+            '1': 0, '2': 1, '3': 2, '4': 3,
+            'Numpad1': 0, 'Numpad2': 1, 'Numpad3': 2, 'Numpad4': 3
+        };
+        
+        const key = event.key;
+        const optionIndex = keyMap[key]; 
+        
+        if (optionIndex !== undefined) {
+            event.preventDefault(); 
+            const optionButtons = mcqOptionsArea.querySelectorAll('.mcq-option');
+            
+            if (optionIndex < optionButtons.length) {
+                handleMcqAnswer(optionButtons[optionIndex]); 
+            }
+            return;
+        }
+    }
 
-    // 2. "Shift" 鍵
     if (event.key === 'Shift') {
         if (isTyping) return; 
         event.preventDefault();
@@ -775,23 +733,18 @@ function handleGlobalKey(event) {
     }
 }
 
-// --- 9. 翻轉卡片 (新增狀態重置邏輯) ---
 function flipCard() {
     const wasFlipped = flashcard.classList.contains('is-flipped');
     
     flashcard.classList.toggle('is-flipped');
     
-    // 關鍵邏輯：如果卡片被翻回到正面
     if (wasFlipped && !flashcard.classList.contains('is-flipped')) {
-        
-        // 只有在 review 模式下才需要將按鈕狀態改回「顯示答案」
         if (currentMode === 'review') {
             nextButton.textContent = "顯示答案"; 
         } 
     }
 }
 
-// --- 10. ⭐️ 滑動手勢處理 (已更新為新邏輯) ⭐️ ---
 function handleTouchStart(event) {
     touchStartX = event.changedTouches[0].screenX;
     touchStartY = event.changedTouches[0].screenY;
@@ -812,14 +765,10 @@ function handleTouchEnd(event) {
 
     const minSwipeThreshold = 50; 
     
-    // 判斷是否為「水平滑動」且超過門檻
     if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY) && Math.abs(swipeDistanceX) > minSwipeThreshold) {
-        
         if (swipeDistanceX < 0) {
-            // 向右滑動 ➡️ 下一張
             triggerNextCardAction(); 
         } else { 
-            // 向左滑動 ⬅️ 翻轉
             flipCard();
         }
     }
@@ -832,7 +781,6 @@ function triggerNextCardAction() {
     }
 }
 
-// --- 11. MCQ 相關函式 (移除編號) ---
 function generateMcqOptions() {
     const correctAnswer = currentCorrectAnswer;
     let distractors = [];
@@ -861,14 +809,13 @@ function generateMcqOptions() {
     options.forEach((option) => {
         const button = document.createElement('button');
         button.className = 'mcq-option';
-        button.textContent = option; // 移除編號前綴
+        button.textContent = option; 
         button.dataset.answer = option; 
-        button.addEventListener('click', handleMcqAnswer); // 使用標準事件監聽器
+        button.addEventListener('click', (event) => handleMcqAnswer(event.target)); 
         mcqOptionsArea.appendChild(button);
     });
 }
-function handleMcqAnswer(event) {
-    const selectedButton = event.target; // 使用標準事件 target
+function handleMcqAnswer(selectedButton) {
     const selectedAnswer = selectedButton.dataset.answer;
     
     const allButtons = mcqOptionsArea.querySelectorAll('button');
@@ -887,7 +834,6 @@ function handleMcqAnswer(event) {
         if (isExamMode && !currentCardMarkedWrong) {
             examIncorrectCount++;
             currentCardMarkedWrong = true;
-            // ⭐️ 紀錄錯題 ⭐️
             examIncorrectWords.push({ 
                 question: currentCardData[QUESTION_FIELD], 
                 answer: currentCorrectAnswer 
@@ -899,7 +845,6 @@ function handleMcqAnswer(event) {
     flipCard();
 }
 
-// --- 12. 考試專用函式 (更新錯題列表顯示) ---
 function updateExamProgress() {
     if (!isExamMode) {
         if(examProgress) examProgress.style.display = 'none';
@@ -931,7 +876,6 @@ function showExamResults() {
     else if (finalScore >= 60) message = '不錯喔！ (Good!)';
     else message = '再加油！ (Keep Trying!)';
     
-    // ⭐️ 錯題列表渲染 ⭐️
     let incorrectListHtml = '';
     if (examIncorrectWords.length > 0) {
         incorrectListHtml = '<h2>📚 錯誤清單</h2><ul class="incorrect-list">';
@@ -961,5 +905,4 @@ function showExamResults() {
     `;
 }
 
-// --- ⭐️ 啟動程式 ⭐️ ---
 initializeQuiz();
