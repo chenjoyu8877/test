@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let globalConfig = null; // 儲存 config.json
 
-// ⭐️ 輔助函式：異步載入外部 JSON 檔案 ⭐️
+// 輔助函式：異步載入外部 JSON 檔案 
 async function loadExternalConfig(path) {
     try {
         // 使用時間戳防止快取
@@ -31,7 +31,7 @@ async function renderHomePage() {
             }
             let initialConfig = await response.json();
             
-            // ⭐️ 核心合併邏輯：處理外部配置引用 ⭐️
+            // 核心合併邏輯：處理外部配置引用
             let finalCatalog = [];
             for (const item of initialConfig.catalog) {
                 // 檢查是否為外部配置的標記
@@ -107,12 +107,15 @@ async function renderHomePage() {
                 
                 // 處理 Category 類型
                 if (item.type === 'category') {
-                    // ⭐️ 修正：改用 JS 設置 Hash，並使用 data-id 傳遞參數 ⭐️
+                    // 修正：使用帶有 data-action="navigate" 屬性的錨點標籤
+                    const targetHash = (currentHash.substring(1) ? currentHash.substring(1) + '/' : '') + item.id;
+
                     allHtml += `
                         <a href="javascript:void(0);" 
                            class="list-item category-item list-button" 
                            data-action="navigate" 
-                           data-item-id="${item.id}">
+                           data-item-id="${item.id}"
+                           data-target-hash="${targetHash}">
                             <h2 class="category-name">${item.name}</h2>
                         </a>
                     `;
@@ -157,25 +160,24 @@ async function renderHomePage() {
 
 // 處理所有首頁點擊
 function handleHomePageClick(event) {
-    const target = event.target.closest('.option-button, .list-item.category-item');
+    const target = event.target.closest('.option-button, .list-item.category-item, .list-button');
     if (!target) return;
 
-    const itemId = target.dataset.itemId;
+    const listId = target.dataset.listId;
+    const modeId = target.dataset.modeId;
     const action = target.dataset.action;
-
+    const itemId = target.dataset.itemId;
+    const targetHash = target.dataset.targetHash;
+    
     // ⭐️ 處理分類點擊 (Category Navigation) ⭐️
     if (action === 'navigate' && itemId) {
         event.preventDefault(); 
-        const currentHash = window.location.hash.substring(1);
-        // 確保路徑正確：如果當前不是空hash，加上斜線
-        window.location.hash = (currentHash ? currentHash + '/' : '') + itemId;
+        // 確保 URL Hash 被正確設置，以觸發 hashchange 事件
+        window.location.hash = targetHash;
         return;
     }
-    
-    // 處理測驗模式點擊 (Quiz Mode Selection)
-    const listId = target.dataset.listId;
-    const modeId = target.dataset.modeId;
 
+    // 處理測驗模式點擊 (Quiz Mode Selection)
     if (listId && modeId) {
         event.preventDefault(); 
         
