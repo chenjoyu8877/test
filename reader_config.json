@@ -34,6 +34,18 @@
                       { "label": "日文", "key": "japanese" },
                       { "label": "中文", "key": "chinese" }
                     ]
+                  },
+                  {
+                    "id": "doben17_quiz_japanese",
+                    "type": "quiz",
+                    "name": "輸入測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "chinese",
+                    "a_field": "japanese",
+                    "back_fields": [
+                      { "label": "日文", "key": "japanese" },
+                      { "label": "中文", "key": "chinese" }
+                    ]
                   }
                 ]
               }
@@ -42,7 +54,7 @@
           {
             "name": "單字",
             "type": "category",
-            "id": "lesson17_vocab",
+            "id": "lesson17_vocab_category",
             "enabled": true,
             "items": [
               {
@@ -52,12 +64,38 @@
                 "enabled": true,
                 "modes": [
                   {
+                    "id": "doben17_vocab_review",
+                    "type": "review",
+                    "name": "翻卡複習 (中=>日)",
+                    "enabled": true,
+                    "q_field": "chinese",
+                    "a_field": "japanese",
+                    "back_fields": [
+                      { "label": "日文", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "意思", "key": "definition" }
+                    ]
+                  },
+                  {
                     "id": "doben17_vocab_quiz",
                     "type": "quiz",
                     "name": "輸入測驗 (中=>日)",
                     "enabled": true,
                     "q_field": "definition",
                     "a_field": "kanji",
+                    "back_fields": [
+                      { "label": "日文", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "意思", "key": "definition" }
+                    ]
+                  },
+                  {
+                    "id": "doben17_vocab_mcq_def",
+                    "type": "mcq",
+                    "name": "選擇測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "a_field": "kanji", 
                     "back_fields": [
                       { "label": "日文", "key": "kanji" },
                       { "label": "平假名", "key": "hiragana" },
