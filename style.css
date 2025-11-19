@@ -341,7 +341,7 @@ button#next-button:disabled {
     font-size: 20px;
 }
 
-/* --- 6. ⭐️ 測驗 UI (已修改) ⭐️ --- */
+/* --- 6. ⭐️ 測驗 UI (已修改) ⭐️ */
 .quiz-input-section {
     display: none; 
     width: 100%;
@@ -401,6 +401,9 @@ button.mcq-option {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    
+    /* ⭐️ 核心修正：將文字靠左對齊 ⭐️ */
+    text-align: left; 
 }
 button.mcq-option:hover:not(:disabled) {
     border-color: #4a90e2;
@@ -496,7 +499,7 @@ button.mcq-option.incorrect {
     font-size: 14px;
     background-color: #f7f7f7;
     
-    max-height: 0; /* 預設收合 */
+    max-height: 0; 
     overflow: hidden;
     opacity: 0;
     transition: max-height 0.4s ease-out, opacity 0.4s ease-out, padding 0.4s ease-out;

@@ -18,6 +18,8 @@
         <h1 id="practice-exam-title">請選擇模式</h1>
         <a href="#" class="home-button button-return">返回</a>
         
+        <h3 id="single-list-summary" style="margin-bottom: 20px;"></h3>
+
         <div class="mode-container">
             <h3>練習模式</h3>
             <p>無限練習，沒有計分。</p>
@@ -58,7 +60,7 @@
         <a href="#" class="home-button button-return">返回</a>
         
         <div class="mode-container">
-            <h3>請選擇題數</h3>
+            <h3>請選擇題數或自訂輸入</h3>
             <div class="exam-options">
                 <input type="radio" id="q10" name="exam-length" value="10" checked>
                 <label for="q10">10 題</label>
@@ -69,11 +71,18 @@
                 <input type="radio" id="qAll" name="exam-length" value="all">
                 <label for="qAll">全部</label>
             </div>
-            <button id="start-exam-final-btn" class="option-button mcq-mode">開始考試</button>
+            
+            <div style="margin-top: 15px;">
+                <input type="radio" id="qCustomRadio" name="exam-length" value="custom">
+                <label for="qCustomRadio">自訂題數:</label>
+                <input type="number" id="qCustomInput" min="1" max="999" placeholder="輸入題數" style="width: 100px; padding: 5px;">
+            </div>
+            
+            <button id="start-exam-final-btn" class="option-button mcq-mode" style="margin-top: 20px;">開始考試</button>
         </div>
     </div>
 
-    <div id="quiz-main-area">
+    <div id="quiz-main-area" tabindex="-1"> 
         <div id="exam-progress-bar"></div>
         <a href="#" class="home-button button-return">返回</a> 
 
@@ -89,7 +98,11 @@
         <div class="quiz-input-section" id="quiz-input-section">
             <textarea id="answer-input" placeholder="請輸入答案..." autocomplete="off" autocapitalize="none" rows="3"></textarea>
         </div>
-        <button id="next-button">下一張</button>
+        
+        <div class="quiz-button-group">
+            <button id="next-button">檢查答案</button>
+            <button id="give-up-button" class="option-button review-mode" style="display: none; margin-left: 10px;">我不會</button>
+        </div>
         
         <div id="operation-toggle" class="toggle-button">
             <h4>操作說明 & 快捷鍵 <span id="toggle-icon">▼</span></h4>
