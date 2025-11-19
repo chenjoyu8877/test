@@ -26,7 +26,7 @@ const modeButtonContainer = document.getElementById('mode-button-container');
 const practiceExamTitle = document.getElementById('practice-exam-title');
 const examSetupTitle = document.getElementById('exam-setup-title'); 
 const startPracticeBtn = document.getElementById('start-practice-btn');
-const startExamSetupBtn = document.getElementById('start-exam-setup-btn');
+const startExamSetupBtn = document.getElementById('startExamSetupBtn');
 const startExamFinalBtn = document.getElementById('start-exam-final-btn');
 
 // 獲取多選區塊元素
@@ -577,7 +577,7 @@ async function loadNextCard() {
         nextButton.textContent = "檢查答案"; 
         nextButton.disabled = false;
         if (answerInput) answerInput.focus(); 
-        if (giveUpButton) giveUpButton.disabled = false; // 啟用「我不會」
+        if (giveUpButton) giveUpButton.style.display = 'inline-block'; // 啟用「我不會」
         
     } else if (currentMode === 'mcq') {
         generateMcqOptions();
