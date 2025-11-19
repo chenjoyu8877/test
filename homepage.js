@@ -1,3 +1,4 @@
+// homepage.js (Modified for External Config Loading)
 // 頁面載入完成後，執行
 document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('hashchange', renderHomePage);
@@ -9,7 +10,6 @@ let globalConfig = null; // 儲存 config.json
 // 輔助函式：異步載入外部 JSON 檔案 
 async function loadExternalConfig(path) {
     try {
-        // 使用時間戳防止快取
         const response = await fetch(path + '?v=' + new Date().getTime());
         if (!response.ok) {
             console.error(`無法讀取外部配置: ${path}`, response.statusText);
@@ -122,24 +122,37 @@ async function renderHomePage() {
                 } 
                 // 處理 List 類型 (單字庫)
                 else if (item.type === 'list') {
-                    allHtml += `
-                        <div class="list-item quiz-item">
-                            <h2 class="list-name">${item.name}</h2>
-                            <div class="mode-buttons">
-                    `;
-                    // 渲染模式按鈕
-                    if (item.modes && item.modes.length > 0) {
-                        for (const mode of item.modes) {
-                            if (mode.enabled) {
-                                allHtml += `
-                                    <button class="option-button ${mode.type}-mode" data-list-id="${item.id}" data-mode-id="${mode.id}" data-mode-type="${mode.type}">
-                                        ${mode.name}
-                                    </button>
-                                `;
+                    // ⭐️ 修正：檢查是否為 MULTI_SELECT_ENTRY ⭐️
+                    if (item.id === 'MULTI_SELECT_ENTRY') {
+                        // 綜合測驗區入口：直接顯示為一個大按鈕，導向 quiz.html 進行選擇
+                        allHtml += `
+                            <a href="quiz.html?list=${item.id}&mode_id=INITIATE_SELECT" 
+                               class="list-item quiz-item list-button mcq-mode list-button-group" 
+                               style="display: flex; justify-content: center; align-items: center; padding: 25px;">
+                                <h2 class="list-name" style="color: white; margin: 0;">${item.name}</h2>
+                            </a>
+                        `;
+                    } else {
+                        // 既有的單一單字庫模式選擇
+                        allHtml += `
+                            <div class="list-item quiz-item">
+                                <h2 class="list-name">${item.name}</h2>
+                                <div class="mode-buttons">
+                        `;
+                        // 渲染模式按鈕
+                        if (item.modes && item.modes.length > 0) {
+                            for (const mode of item.modes) {
+                                if (mode.enabled) {
+                                    allHtml += `
+                                        <button class="option-button ${mode.type}-mode" data-list-id="${item.id}" data-mode-id="${mode.id}" data-mode-type="${mode.type}">
+                                            ${mode.name}
+                                        </button>
+                                    `;
+                                }
                             }
                         }
+                        allHtml += `</div></div>`;
                     }
-                    allHtml += `</div></div>`;
                 }
             }
         }
@@ -169,7 +182,7 @@ function handleHomePageClick(event) {
     const itemId = target.dataset.itemId;
     const targetHash = target.dataset.targetHash;
     
-    // ⭐️ 處理分類點擊 (Category Navigation) ⭐️
+    // 處理分類點擊 (Category Navigation)
     if (action === 'navigate' && itemId) {
         event.preventDefault(); 
         // 確保 URL Hash 被正確設置，以觸發 hashchange 事件
