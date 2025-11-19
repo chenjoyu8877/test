@@ -1,0 +1,521 @@
+/* --- 1. 基本頁面樣式 (共用) --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f7f6;
+    color: #333;
+    text-align: center;
+}
+h1 { color: #444; }
+
+/* --- 2. ⭐️ 首頁 (index.html) 樣式 (共用) ⭐️ --- */
+.homepage-container {
+    width: 90%;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+}
+.homepage-container h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+.list-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px; 
+}
+.breadcrumbs {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+    text-align: left;
+}
+.breadcrumbs li {
+    display: inline;
+    font-size: 16px;
+    color: #555;
+}
+.breadcrumbs li a {
+    color: #4a90e2;
+    text-decoration: none;
+}
+.breadcrumbs li a:hover {
+    text-decoration: underline;
+}
+.breadcrumbs li::after {
+    content: '/';
+    margin: 0 8px;
+    color: #aaa;
+}
+.breadcrumbs li:last-child::after {
+    content: '';
+}
+
+/* ⭐️ 2c. 首頁「資料夾」按鈕 (list-button) 樣式 ⭐️ */
+.list-button {
+    background-color: #34495e; /* 深藍色 */
+    padding: 20px;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+.list-button:hover {
+    background-color: #2c3e50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* ⭐️ 2d. 新增：「返回」按鈕樣式 ⭐️ */
+.back-button {
+    background-color: #f0f0f0; /* 淺灰色 */
+    color: #555;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    padding: 15px 20px;
+    border: 1px solid #ddd;
+    text-align: left; /* 讓箭頭和文字靠左 */
+}
+.back-button:hover {
+    background-color: #e0e0e0;
+    border-color: #ccc;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* (模式按鈕/單字庫容器) */
+.list-item {
+    background-color: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px;
+}
+.list-item h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+.button-group {
+    display: flex;
+    flex-direction: column; 
+    gap: 10px;
+}
+.option-button {
+    flex: 1;
+    padding: 15px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+.option-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.option-button.review-mode { background-color: #4a90e2; }
+.option-button.review-mode:hover { background-color: #3f7bbf; }
+.option-button.quiz-mode { background-color: #50b3a2; }
+.option-button.quiz-mode:hover { background-color: #409182; }
+.option-button.mcq-mode { background-color: #8e44ad; }
+.option-button.mcq-mode:hover { background-color: #732d91; }
+
+
+/* --- 3. ⭐️ 測驗頁 (quiz.html) 樣式 ⭐️ --- */
+.setup-container {
+    display: none; 
+    width: 90%;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+    position: relative;
+}
+.setup-container h1 {
+    font-size: 22px;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+.setup-container .home-button {
+    position: absolute; 
+    top: 15px;
+    right: 15px;
+    margin-top: 0;
+}
+.mode-container {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+.mode-container h3 {
+    margin-top: 0;
+}
+.mode-container p {
+    font-size: 14px;
+    color: #666;
+}
+.exam-options {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+.exam-options label {
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* ⭐️ 多選列表樣式 ⭐️ */
+.checkbox-list {
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 10px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin: 20px auto;
+    max-width: 300px;
+}
+.checkbox-list label {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    padding: 5px 0;
+    width: 100%;
+    cursor: pointer;
+}
+.checkbox-list input[type="checkbox"] {
+    margin-right: 10px;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+/* --- 4. ⭐️ 測驗主體區 (quiz.html) ⭐️ --- */
+#quiz-main-area {
+    display: none; 
+    width: 100%;
+    max-width: 500px; 
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+#exam-progress-bar {
+    display: none; 
+    width: 100%;
+    max-width: 320px;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    box-sizing: border-box;
+}
+
+#quiz-main-area .home-button {
+    position: absolute;
+    top: -5px; 
+    right: 0;
+    margin-bottom: 0;
+}
+
+/* (翻轉卡片樣式 - 不變) */
+.flashcard-container { perspective: 1000px; margin: 20px; margin-top: 40px; }
+.flashcard {
+    width: 320px;
+    min-height: 220px;
+    height: auto;
+    display: grid;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+.card-face {
+    grid-row-start: 1;
+    grid-column-start: 1;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    box-sizing: border-box;
+    padding: 20px;
+}
+.card-front {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    font-size: 28px;
+    font-weight: bold;
+    word-break: break-word;
+}
+.card-back {
+    background-color: #4a90e2;
+    color: white;
+    transform: rotateY(180deg);
+}
+.flashcard.is-flipped {
+    transform: rotateY(180deg);
+}
+
+/* (下一張按鈕 - 不變) */
+button#next-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #50b3a2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+    min-width: 120px; 
+}
+button#next-button:hover { background-color: #409182; }
+button#next-button:disabled {
+    background-color: #9e9e9e;
+    cursor: not-allowed;
+}
+
+/* --- 5. ⭐️ 卡片背面 (新版) 樣式 (不變) ⭐️ --- */
+.card-back {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    text-align: left;
+    padding: 15px 20px;
+    word-break: break-word;
+}
+.back-item {
+    display: flex;
+    font-size: 18px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 8px;
+}
+.back-label {
+    font-size: 16px;
+    color: #cceeff;
+    width: 70px; 
+    flex-shrink: 0; 
+}
+.back-value {
+    font-size: 18px;
+    color: #ffffff;
+    font-weight: bold;
+}
+.back-value.answer {
+    color: #ffff00;
+    font-size: 20px;
+}
+
+/* --- 6. ⭐️ 測驗 UI (已修改) ⭐️ --- */
+.quiz-input-section {
+    display: none; 
+    width: 100%;
+    max-width: 320px; 
+    margin: 15px 0;
+}
+#answer-input {
+    width: 100%;
+    min-height: 80px; 
+    padding: 12px;
+    font-size: 18px;
+    font-family: inherit;
+    line-height: 1.5;
+    text-align: left; 
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    resize: vertical;
+}
+#answer-input:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 8px rgba(74,144,226,0.3);
+    outline: none;
+}
+#answer-input.correct {
+    background-color: #e6ffed;
+    border-color: #50b3a2;
+}
+#answer-input.incorrect {
+    background-color: #ffe6e6;
+    border-color: #e573a3;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+.shake { animation: shake 0.5s ease-in-out; }
+.mcq-options-section {
+    display: none; 
+    width: 100%;
+    max-width: 320px; 
+    margin: 15px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+button.mcq-option {
+    width: 100%;
+    min-height: 60px;
+    padding: 10px;
+    font-size: 16px;
+    color: #333;
+    background-color: #ffffff;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+button.mcq-option:hover:not(:disabled) {
+    border-color: #4a90e2;
+    background-color: #f7faff;
+}
+button.mcq-option:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+button.mcq-option.correct {
+    background-color: #e6ffed;
+    border-color: #50b3a2;
+    color: #2e7d32;
+    font-weight: bold;
+}
+button.mcq-option.incorrect {
+    background-color: #ffe6e6;
+    border-color: #e573a3;
+    color: #c62828;
+    opacity: 1; 
+}
+
+/* --- 7. ⭐️ 考試結果區 ⭐️ */
+#exam-results-area {
+    display: none; 
+    width: 90%;
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+}
+.results-summary h2 {
+    font-size: 28px;
+    margin-top: 0;
+}
+.results-summary .final-score {
+    font-size: 64px;
+    font-weight: bold;
+    color: #4a90e2;
+    margin: 20px 0;
+}
+.results-summary p {
+    font-size: 18px;
+    color: #333;
+}
+#exam-results-area .option-button {
+    margin-top: 20px;
+}
+
+/* --- 8. ⭐️ 操作註解區塊 (operation-notes) ⭐️ */
+
+/* 新增：切換按鈕的樣式 */
+#operation-toggle {
+    width: 100%;
+    max-width: 320px;
+    margin-top: 25px;
+    padding: 10px 15px;
+    background-color: #e6f0ff; 
+    border: 1px solid #cce0ff;
+    border-radius: 8px;
+    text-align: left;
+    color: #4a90e2; 
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#operation-toggle:hover {
+    background-color: #d8e6ff;
+}
+#operation-toggle h4 {
+    margin: 0;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+/* operation-notes 區塊的樣式 - 負責展開/收合 */
+#operation-notes {
+    width: 100%;
+    max-width: 320px;
+    padding: 0 15px; 
+    border: 1px solid #ddd;
+    border-top: none; 
+    border-radius: 0 0 8px 8px;
+    text-align: left;
+    color: #555;
+    font-size: 14px;
+    background-color: #f7f7f7;
+    
+    max-height: 0; /* 預設收合 */
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease-out, opacity 0.4s ease-out, padding 0.4s ease-out;
+}
+#operation-notes.expanded {
+    max-height: 200px; 
+    padding: 15px; 
+    opacity: 1;
+    border-color: #ddd;
+}
+#operation-notes ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+#operation-notes ul li {
+    margin-bottom: 5px;
+    line-height: 1.5;
+}
+.expanded #toggle-icon {
+    transform: rotate(180deg);
+}
