@@ -522,3 +522,10 @@ button.mcq-option.incorrect {
 .expanded #toggle-icon {
     transform: rotate(180deg);
 }
+/* --- 9. 隱藏焦點框 (Focus Ring) --- */
+
+/* 隱藏 #quiz-main-area 獲得焦點時的系統預設外框 */
+#quiz-main-area:focus {
+    outline: none; 
+    box-shadow: none; /* 確保沒有任何陰影或自訂框出現 */
+}
