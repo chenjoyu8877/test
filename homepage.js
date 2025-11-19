@@ -1,3 +1,4 @@
+// homepage.js (Modified for External Config Loading)
 // 頁面載入完成後，執行
 document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('hashchange', renderHomePage);
@@ -46,7 +47,7 @@ async function renderHomePage() {
                 }
             }
 
-            initialConfig.catalog = finalCatalog; // 覆寫 catalog 為合併後的結果
+            initialConfig.catalog = finalCatalog; // 覆寫 catalog
             globalConfig = initialConfig;
             document.title = globalConfig.siteTitle || '單字卡練習';
         }
@@ -88,7 +89,7 @@ async function renderHomePage() {
                     <li>
                         ${isActive ? 
                             `<span>${segment.name}</span>` : 
-                            `<a href="${segment.hash}">${segment.name}</a>`
+                            `<a href="${segment.hash}"> ${segment.name}</a>`
                         }
                     </li>
                 `;
@@ -102,7 +103,8 @@ async function renderHomePage() {
         let allHtml = '';
         if (currentLevelItems) {
             for (const item of currentLevelItems) {
-                if (!item.enabled) continue; 
+                // 忽略外部配置佔位符 (external_category)
+                if (!item.enabled || item.type === 'external_category') continue; 
                 
                 // 處理 Category 類型
                 if (item.type === 'category') {
