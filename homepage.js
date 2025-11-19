@@ -89,7 +89,7 @@ async function renderHomePage() {
                     <li>
                         ${isActive ? 
                             `<span>${segment.name}</span>` : 
-                            `<a href="${segment.hash}"> ${segment.name}</a>`
+                            `<a href="${segment.hash}">${segment.name}</a>`
                         }
                     </li>
                 `;
@@ -108,10 +108,11 @@ async function renderHomePage() {
                 
                 // 處理 Category 類型
                 if (item.type === 'category') {
+                    // ⭐️ 修正：使用帶有 list-item 和 list-button 的錨點標籤，以便套用顏色/浮動樣式 ⭐️
                     allHtml += `
-                        <div class="list-item category-item" onclick="window.location.hash += '${item.id}/';">
+                        <a href="#${currentHash}${item.id}/" class="list-item category-item list-button">
                             <h2 class="category-name">${item.name}</h2>
-                        </div>
+                        </a>
                     `;
                 } 
                 // 處理 List 類型 (單字庫)
