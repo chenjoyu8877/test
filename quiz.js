@@ -9,7 +9,6 @@ const mcqOptionsArea = document.getElementById('mcq-options-section');
 const examProgress = document.getElementById('exam-progress-bar');
 const operationToggle = document.getElementById('operation-toggle');
 
-// ⭐️ FIX: 確保給予變數賦值 ⭐️
 const giveUpButton = document.getElementById('give-up-button');
 
 
@@ -26,7 +25,7 @@ const modeButtonContainer = document.getElementById('mode-button-container');
 const practiceExamTitle = document.getElementById('practice-exam-title');
 const examSetupTitle = document.getElementById('exam-setup-title'); 
 const startPracticeBtn = document.getElementById('start-practice-btn');
-const startExamSetupBtn = document.getElementById('startExamSetupBtn');
+const startExamSetupBtn = document.getElementById('start-exam-setup-btn');
 const startExamFinalBtn = document.getElementById('start-exam-final-btn');
 
 // 獲取多選區塊元素
@@ -94,6 +93,22 @@ function normalizeString(str) {
     return str.replace(/～/g, '').replace(/~/g, '').replace(/・/g, '').replace(/\./g, '').replace(/\s/g, '');
 }
 
+// ⭐️ 輔助函式：異步載入外部 JSON 檔案 ⭐️
+async function loadExternalConfig(path) {
+    try {
+        // 使用時間戳防止快取
+        const response = await fetch(path + '?v=' + new Date().getTime());
+        if (!response.ok) {
+            console.error(`無法讀取外部配置: ${path}`, response.statusText);
+            return []; // 載入失敗時返回空陣列
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`載入外部配置失敗: ${path}`, error);
+        return [];
+    }
+}
+
 // --- 2. ⭐️ 非同步讀取 (處理多選邏輯) ⭐️ ---
 async function initializeQuiz() {
     // 1. 載入 config
@@ -108,13 +123,28 @@ async function initializeQuiz() {
         return;
     }
     
-    // ⭐️ 2. 收集所有列表配置 (用於多選)
+    // ⭐️ 2. 載入並合併外部配置 (FIX for modular config) ⭐️
+    let initialConfig = config; 
+    let finalCatalog = [];
+    
+    for (const item of initialConfig.catalog) {
+        if (item.type === 'external_category' && item.path) {
+            console.log(`正在載入外部配置: ${item.path}`);
+            const externalItems = await loadExternalConfig(item.path);
+            finalCatalog.push(...externalItems);
+        } else {
+            finalCatalog.push(item);
+        }
+    }
+    initialConfig.catalog = finalCatalog; // 覆寫 config.catalog
+    
+    // ⭐️ 3. 收集所有列表配置 (用於多選)
     allListConfigs = {};
-    if (config.catalog) {
-        config.catalog.forEach(item => findListById([item]));
+    if (initialConfig.catalog) {
+        initialConfig.catalog.forEach(item => findListById([item]));
     }
     
-    // 3. 獲取 URL 參數
+    // 4. 獲取 URL 參數
     const params = new URLSearchParams(window.location.search);
     const listName = params.get('list');
     let modeId = params.get('mode_id');
@@ -216,19 +246,21 @@ async function initializeQuiz() {
     for (const id of listIdsToLoad) {
         try {
             const filePath = `words/${id}.json?v=${new Date().getTime()}`;
+            console.log(`嘗試載入單字庫檔案: ${filePath}`); // 診斷輸出
             const response = await fetch(filePath); 
             if (!response.ok) { 
-                console.error(`無法讀取 ${id}.json 檔案`); 
+                console.error(`無法讀取 ${id}.json 檔案。HTTP 狀態碼: ${response.status}`); 
                 continue; 
             }
             const listData = await response.json();
             vocabulary.push(...listData); 
         } catch (e) {
-            console.error(`載入 ${id}.json 失敗:`, e);
+            console.error(`載入 ${id}.json 失敗 (網路或解析錯誤):`, e);
         }
     }
 
     if (vocabulary.length > 0) {
+        console.log(`成功載入 ${vocabulary.length} 條單字數據。`); // 診斷輸出
         
         // ⭐️ 9. 設定所有「返回」按鈕的連結 (修正返回邏輯) ⭐️
         let targetUrl;
