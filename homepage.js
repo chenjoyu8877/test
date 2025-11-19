@@ -1,4 +1,3 @@
-// homepage.js (Modified for External Config Loading)
 // 頁面載入完成後，執行
 document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('hashchange', renderHomePage);
@@ -7,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let globalConfig = null; // 儲存 config.json
 
-// ⭐️ 新增：輔助函式，異步載入外部 JSON 檔案 ⭐️
+// ⭐️ 輔助函式：異步載入外部 JSON 檔案 ⭐️
 async function loadExternalConfig(path) {
     try {
         // 使用時間戳防止快取
@@ -108,9 +107,12 @@ async function renderHomePage() {
                 
                 // 處理 Category 類型
                 if (item.type === 'category') {
-                    // ⭐️ 修正：使用帶有 list-item 和 list-button 的錨點標籤，以便套用顏色/浮動樣式 ⭐️
+                    // ⭐️ 修正：改用 JS 設置 Hash，並使用 data-id 傳遞參數 ⭐️
                     allHtml += `
-                        <a href="#${currentHash}${item.id}/" class="list-item category-item list-button">
+                        <a href="javascript:void(0);" 
+                           class="list-item category-item list-button" 
+                           data-action="navigate" 
+                           data-item-id="${item.id}">
                             <h2 class="category-name">${item.name}</h2>
                         </a>
                     `;
@@ -155,12 +157,24 @@ async function renderHomePage() {
 
 // 處理所有首頁點擊
 function handleHomePageClick(event) {
-    const button = event.target.closest('.option-button');
-    if (!button) return;
+    const target = event.target.closest('.option-button, .list-item.category-item');
+    if (!target) return;
 
-    // 檢查是否點擊了「模式」按鈕 (最終按鈕)
-    const listId = button.dataset.listId;
-    const modeId = button.dataset.modeId;
+    const itemId = target.dataset.itemId;
+    const action = target.dataset.action;
+
+    // ⭐️ 處理分類點擊 (Category Navigation) ⭐️
+    if (action === 'navigate' && itemId) {
+        event.preventDefault(); 
+        const currentHash = window.location.hash.substring(1);
+        // 確保路徑正確：如果當前不是空hash，加上斜線
+        window.location.hash = (currentHash ? currentHash + '/' : '') + itemId;
+        return;
+    }
+    
+    // 處理測驗模式點擊 (Quiz Mode Selection)
+    const listId = target.dataset.listId;
+    const modeId = target.dataset.modeId;
 
     if (listId && modeId) {
         event.preventDefault(); 
