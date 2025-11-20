@@ -5,21 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let globalConfig = null; // 儲存 config.json
-let allListConfigs = {}; 
-
-// ⭐️ 輔助函式：遞迴收集所有 list ID
-function collectAllListConfigs(items) {
-    if (!items) return;
-    for (const item of items) {
-        if (item.type === 'list' && item.enabled !== false) {
-            allListConfigs[item.id] = { name: item.name, modes: item.modes };
-        }
-        if (item.type === 'category') {
-            collectAllListConfigs(item.items);
-        }
-    }
-}
-
 
 async function renderHomePage() {
     try {
@@ -30,10 +15,6 @@ async function renderHomePage() {
             }
             globalConfig = await response.json();
             document.title = globalConfig.siteTitle || '單字卡練習';
-            
-            // 收集所有可用的單字庫配置
-            allListConfigs = {};
-            collectAllListConfigs(globalConfig.catalog);
         }
 
         const container = document.getElementById('list-container');
@@ -87,7 +68,7 @@ async function renderHomePage() {
 
             if (item.type === 'category') {
                 // --- 這是一個「資料夾」 ---
-                // 這裡已經是正確的按鈕樣式
+                // 使用 list-button 樣式讓它看起來像按鈕
                 allHtml += `
                     <a href="#${pathSegments.map(p => p.hash.substring(1)).join('/')}${pathSegments.length > 0 ? '/' : ''}${item.id}" class="option-button list-button">
                         ${item.name}
@@ -96,16 +77,19 @@ async function renderHomePage() {
             } else if (item.type === 'list') {
                 // --- 這是一個「單字庫」 ---
                 
-                // ⭐️ 修正：針對「自選多庫測驗入口」使用按鈕樣式，而非卡片樣式 ⭐️
+                // ⭐️ 修正重點：針對「自選多庫測驗入口」使用特殊按鈕樣式 ⭐️
                 if (item.id === 'MULTI_SELECT_ENTRY') {
-                    // 使用 option-button 和 mcq-mode 類別，讓它變成紫色的按鈕
+                    // 直接使用 <a> 標籤作為按鈕，套用 mcq-mode (紫色) 樣式
+                    // 移除多餘的 div 結構，避免樣式衝突
                     allHtml += `
-                        <a href="quiz.html?list=${item.id}&mode_id=INITIATE_SELECT" class="option-button list-button mcq-mode" style="text-align: center; display: block;">
+                        <a href="quiz.html?list=${item.id}&mode_id=INITIATE_SELECT" 
+                           class="option-button list-button mcq-mode" 
+                           style="display: flex; justify-content: center; align-items: center; text-decoration: none; margin-bottom: 10px;">
                             ${item.name}
                         </a>
                     `;
                 } else {
-                    // 其他單字庫保持原有的卡片樣式 (白底 + 標題 + 模式按鈕)
+                    // --- 一般單字庫 (保持白底卡片樣式) ---
                     allHtml += `
                         <div class="list-item">
                             <h4 class="list-name">${item.name}</h4>
@@ -137,17 +121,18 @@ async function renderHomePage() {
         console.error('載入首頁設定失敗:', error);
         const container = document.getElementById('list-container');
         if (container) {
-            container.innerHTML = '<p>載入設定檔失敗。</p>';
+            container.innerHTML = '<p>載入設定檔失敗。請檢查 config.json 格式。</p>';
         }
     }
 }
 
-// ⭐️ 9. 處理所有首頁點擊 (不變)
+// 9. 處理所有首頁點擊
 function handleHomePageClick(event) {
     const button = event.target.closest('.option-button');
     if (!button) return;
 
-    // 檢查是否點擊了「模式」按鈕 (最終按鈕)
+    // 檢查是否點擊了一般單字庫的「模式」按鈕 (最終按鈕)
+    // 注意：MULTI_SELECT_ENTRY 是直接使用 href 跳轉，不走這裡
     const listId = button.dataset.listId;
     const modeId = button.dataset.modeId;
 
@@ -159,6 +144,4 @@ function handleHomePageClick(event) {
         const url = `quiz.html?list=${listId}&mode_id=${modeId}&exam=${isExam}`;
         window.location.href = url;
     }
-    
-    // 如果是 MULTI_SELECT_ENTRY 的 <a> 標籤，它會自動導航，不需要這裡處理
 }
