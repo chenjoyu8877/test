@@ -3,18 +3,18 @@
   "catalog": [
     {
       "name": "綜合測驗區",
-      "type": "external_category", 
-      "path": "combined_config.json"
+      "type": "external_category",
+      "path": "configs/combined_config.json"
     },
     {
       "name": "JLPT",
-      "type": "external_category", 
-      "path": "jlpt_config.json"
+      "type": "external_category",
+      "path": "configs/jlpt_config.json"
     },
     {
       "name": "讀本",
-      "type": "external_category", 
-      "path": "reader_config.json"
+      "type": "external_category",
+      "path": "configs/reader_config.json"
     }
   ]
 }
