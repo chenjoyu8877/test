@@ -127,10 +127,12 @@ async function loadExternalConfig(path) {
     try {
         const response = await fetch(path + '?v=' + new Date().getTime());
         if (!response.ok) {
+            console.error(`無法讀取外部配置: ${path}`, response.statusText);
             return []; 
         }
         return await response.json();
     } catch (error) {
+        console.error(`載入外部配置失敗: ${path}`, error);
         return [];
     }
 }
@@ -144,6 +146,8 @@ async function initializeQuiz() {
         config = await configResponse.json();
     } catch (error) {
         console.error('載入設定失敗:', error);
+        modeChoiceTitle.textContent = '載入設定檔失敗';
+        modeButtonContainer.innerHTML = '<p>請檢查 config.json 檔案。</p>';
         return;
     }
     
@@ -153,6 +157,7 @@ async function initializeQuiz() {
     
     for (const item of initialConfig.catalog) {
         if (item.type === 'external_category' && item.path) {
+            console.log(`正在載入外部配置: ${item.path}`);
             const externalItems = await loadExternalConfig(item.path);
             finalCatalog.push(...externalItems);
         } else {
@@ -184,25 +189,51 @@ async function initializeQuiz() {
         return;
     }
 
-    // 4. 模式選擇區 (如果沒有 mode_id)
+    // ⭐️ 4. 模式選擇區 (如果 URL 只有 listName) ⭐️
     if (!modeId) {
         if (listConfig.type !== 'list') {
             window.location.href = 'index.html'; 
             return;
         }
 
-        // ⭐️ FIX 1: 如果是單一單字庫，按返回應該回到首頁的該層級 ⭐️
+        modeChoiceTitle.textContent = '選擇測驗模式'; 
+        
+        // ⭐️ FIX: 計算正確的首頁層級路徑 (#jlpt/n3) ⭐️
         const parentHash = findParentHash(initialConfig.catalog, listName);
-        if (parentHash) {
-            // 如果能找到父層，直接跳轉回去，避免顯示這個獨立的選擇頁
-            // 或者我們在這裡設定返回按鈕
-            window.location.href = `index.html${parentHash}`;
-            return;
+        const returnBtn = document.querySelector('#mode-choice-area .home-button');
+        // (雖然這裡有處理，但通常使用者會直接被重導回首頁，除非直接輸入網址)
+        if (returnBtn) {
+            returnBtn.href = parentHash ? `index.html${parentHash}` : 'index.html';
+            returnBtn.textContent = "返回上一層";
         }
         
-        // 如果找不到父層 (例如直接輸入網址)，才顯示這個選擇頁
-        modeChoiceTitle.textContent = '選擇測驗模式'; 
-        // ... (按鈕生成代碼略)
+        // ⭐️ 關鍵優化：如果能找到父層，直接跳轉回去首頁顯示列表，體驗更一致 ⭐️
+        if (parentHash) {
+             window.location.href = `index.html${parentHash}`;
+             return;
+        }
+
+        let buttonHtml = '';
+        if (listConfig.modes && Array.isArray(listConfig.modes)) {
+            for (const mode of listConfig.modes) {
+                if (mode.enabled) {
+                    buttonHtml += `
+                        <button class="option-button ${mode.type}-mode" data-mode-id="${mode.id}" data-mode-type="${mode.type}">
+                            ${mode.name}
+                        </button>
+                    `;
+                }
+            }
+        }
+        modeButtonContainer.innerHTML = buttonHtml;
+        modeButtonContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('.option-button');
+            if (!button) return;
+            const chosenModeId = button.dataset.modeId;
+            const url = `quiz.html?list=${listName}&mode_id=${chosenModeId}`;
+            window.location.href = url;
+        });
+        
         modeChoiceArea.style.display = 'block';
         return;
     }
@@ -215,7 +246,7 @@ async function initializeQuiz() {
         return; 
     }
     
-    // 5.5. 綜合測驗區的返回
+    // 5.5. 綜合測驗區的返回和繼續流程
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'RESUME_MULTI') {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
@@ -259,8 +290,11 @@ async function initializeQuiz() {
     for (const id of listIdsToLoad) {
         try {
             const filePath = `words/${id}.json?v=${new Date().getTime()}`;
+            console.log(`嘗試載入: ${filePath}`); 
             const response = await fetch(filePath); 
-            if (!response.ok) { continue; }
+            if (!response.ok) { 
+                continue; 
+            }
             const listData = await response.json();
             vocabulary.push(...listData); 
         } catch (e) {
@@ -271,8 +305,8 @@ async function initializeQuiz() {
     if (vocabulary.length > 0) {
         
         // ⭐️ 9. 智慧導航連結計算 ⭐️
-        let backToCategoryUrl; // 回到首頁分類層級
-        let backToSetupUrl;    // 回到練習/考試選擇頁
+        let backToCategoryUrl; // 回到首頁分類層級 (Image 1 的樣子)
+        let backToSetupUrl;    // 回到練習/考試選擇頁 (Image 2 的樣子)
         
         // 計算回到首頁的路徑
         const parentHash = findParentHash(initialConfig.catalog, listName);
@@ -285,32 +319,30 @@ async function initializeQuiz() {
             backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`;
         }
 
-        // 10. 顯示 UI 與設定返回按鈕
+        // 10. 顯示 UI
         modeChoiceArea.style.display = 'none';
         
         if (currentMode === 'review') {
-            // Review 模式：直接顯示 Main Area
+            // Review 模式
             isExamMode = false;
             examSetupArea.style.display = 'none'; 
             practiceExamChoiceArea.style.display = 'none';
             modeChoiceArea.style.display = 'none'; 
             mainArea.style.display = 'flex'; 
             
-            // Review 模式的「返回」應該回到首頁的列表層級
+            // Review 模式的「返回」應該回到首頁的列表層級 (Image 1)
             const mainAreaReturnBtn = mainArea.querySelector('.button-return');
             if (mainAreaReturnBtn) {
                 if (selectedIdsFromUrl) {
-                    // 多選模式回多選選單
-                    mainAreaReturnBtn.href = backToSetupUrl; 
+                    mainAreaReturnBtn.href = backToSetupUrl; // 多選回多選選單
                 } else {
-                    // 單選模式回首頁分類
-                    mainAreaReturnBtn.href = backToCategoryUrl; 
+                    mainAreaReturnBtn.href = backToCategoryUrl; // 單選回首頁列表
                 }
             }
             
             setupApp(); 
         } else {
-            // Quiz/MCQ 模式：先顯示設定頁 (Practice/Exam Choice)
+            // Quiz/MCQ 模式
             isExamMode = false; 
             practiceExamChoiceArea.style.display = 'block';
             practiceExamTitle.textContent = `${listConfig.name} - ${modeConfig.name}`;
@@ -326,13 +358,13 @@ async function initializeQuiz() {
                 singleListSummary.textContent = summaryText;
             }
 
-            // ⭐️ 設定頁的返回按鈕 -> 回到首頁分類層級 ⭐️
+            // ⭐️ Practice Choice 頁面的返回按鈕 -> 回到上一層 (首頁列表 / Image 1) ⭐️
             const practiceExamReturnBtn = practiceExamChoiceArea.querySelector('.button-return');
             if (practiceExamReturnBtn) {
                 if (selectedIdsFromUrl) {
                     practiceExamReturnBtn.href = backToSetupUrl; // 多選回上一步
                 } else {
-                    practiceExamReturnBtn.href = backToCategoryUrl; // 單選回首頁
+                    practiceExamReturnBtn.href = backToCategoryUrl; // 單選回首頁列表
                 }
             }
 
@@ -523,6 +555,7 @@ function setupApp() {
         cardContainer.addEventListener('touchend', handleTouchEnd, false);
     }
     
+    // 綁定鍵盤事件到 document
     document.addEventListener('keydown', handleGlobalKey);
     
     if (giveUpButton) {
@@ -941,7 +974,7 @@ function showExamResults() {
         incorrectListHtml += '</ul>';
     }
     
-    // ⭐️ 修正返回按鈕連結：確保測驗結束後回到「練習/考試選擇頁」 ⭐️
+    // ⭐️ FIX 2: 測驗結束後，返回按鈕指向「練習/考試選擇頁」 ⭐️
     const params = new URLSearchParams(window.location.search);
     const listName = params.get('list');
     const modeId = params.get('mode_id');
@@ -965,7 +998,6 @@ function showExamResults() {
         </div>
         ${incorrectListHtml}
         <button id="restart-exam-btn" class="option-button review-mode">再考一次</button>
-        
         <a href="${backToSetupUrl}" class="home-button">返回設定頁</a>
     `;
     
