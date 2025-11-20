@@ -18,7 +18,7 @@
             "enabled": true,
             "modes": [
               {
-                "id": "n3_review_kanji",
+                "id": "n3_review_kanji_def",
                 "type": "review",
                 "name": "翻卡複習 (日=>中)",
                 "enabled": true,
@@ -31,7 +31,7 @@
                 ]
               },
               {
-                "id": "n3_review_def",
+                "id": "n3_review",
                 "type": "review",
                 "name": "翻卡複習 (中=>日)",
                 "enabled": true,
@@ -44,7 +44,7 @@
                 ]
               },
               {
-                "id": "n3_quiz_def",
+                "id": "n3_quiz",
                 "type": "quiz",
                 "name": "輸入測驗 (中=>日)",
                 "enabled": true,
@@ -59,7 +59,7 @@
                 ]
               },
               {
-                "id": "n3_mcq_kanji",
+                "id": "n3_mcq_kanji_def",
                 "type": "mcq",
                 "name": "選擇測驗 (日=>中)",
                 "enabled": true,
@@ -74,7 +74,7 @@
                 ]
               },
               {
-                "id": "n3_mcq_kanji_def",
+                "id": "n3_mcq_kanji",
                 "type": "mcq",
                 "name": "選擇測驗 (中=>日)",
                 "enabled": true,
@@ -112,7 +112,7 @@
             "enabled": true,
             "modes": [
               {
-                "id": "n4_review_kanji",
+                "id": "n4_review_kanji_def",
                 "type": "review",
                 "name": "翻卡複習 (日=>中)",
                 "enabled": true,
@@ -125,7 +125,7 @@
                 ]
               },
               {
-                "id": "n4_review_def",
+                "id": "n4_review",
                 "type": "review",
                 "name": "翻卡複習 (中=>日)",
                 "enabled": true,
@@ -138,7 +138,7 @@
                 ]
               },
               {
-                "id": "n4_quiz_def",
+                "id": "n4_quiz",
                 "type": "quiz",
                 "name": "輸入測驗 (中=>日)",
                 "enabled": true,
@@ -170,7 +170,7 @@
               {
                 "id": "n4_mcq_kanji_def",
                 "type": "mcq",
-                "name": "選擇測驗 (日=>中)",
+                "name": "選擇測驗 (中=>日)",
                 "enabled": true,
                 "q_field": "definition",
                 "a_field": "kanji",
@@ -199,7 +199,7 @@
             "enabled": true,
             "modes": [
               {
-                "id": "n5_review_kanji",
+                "id": "n5_review_kanji_def",
                 "type": "review",
                 "name": "翻卡複習 (日=>中)",
                 "enabled": true,
@@ -212,7 +212,7 @@
                 ]
               },
               {
-                "id": "n5_review_def",
+                "id": "n5_review",
                 "type": "review",
                 "name": "翻卡複習 (中=>日)",
                 "enabled": true,
@@ -257,10 +257,10 @@
               {
                 "id": "n5_mcq_kanji_def",
                 "type": "mcq",
-                "name": "選擇測驗 (日=>中)",
+                "name": "選擇測驗 (中=>日)",
                 "enabled": true,
-                "q_field": "kanji",
-                "a_field": "definition",
+                "q_field": "definition",
+                "a_field": "kanji",
                 "back_fields": [
                   { "label": "平假名", "key": "hiragana" },
                   { "label": "音調", "key": "pitch" },
