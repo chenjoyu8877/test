@@ -9,7 +9,9 @@ const mcqOptionsArea = document.getElementById('mcq-options-section');
 const examProgress = document.getElementById('exam-progress-bar');
 const operationToggle = document.getElementById('operation-toggle');
 
+// ⭐️ FIX: 確保給予變數賦值，解決 ReferenceError ⭐️
 const giveUpButton = document.getElementById('give-up-button');
+
 
 // 獲取「區域」元素
 const modeChoiceArea = document.getElementById('mode-choice-area');
@@ -45,6 +47,7 @@ const singleListSummary = document.getElementById('single-list-summary');
 const qCustomRadio = document.getElementById('qCustomRadio');
 const qCustomInput = document.getElementById('qCustomInput');
 
+
 // 考試模式變數
 let isExamMode = false;
 let examTotalQuestions = 0;
@@ -53,7 +56,7 @@ let examIncorrectCount = 0;
 let testedIndices = new Set();
 let currentCardMarkedWrong = false;
 
-// 儲存錯題的單字數據
+// ⭐️ 儲存錯題的單字數據 ⭐️
 let examIncorrectWords = []; 
 let currentCardData = {}; 
 
@@ -74,10 +77,11 @@ let selectedListIDs = [];
 let multiSelectEntryConfig = null;
 let config = null; 
 
-// 輔助函式：遞迴收集所有 list ID
+// ⭐️ 輔助函式：遞迴收集所有 list ID
 function findListById(items) {
     if (!items) return;
     for (const item of items) {
+        // 修正：收集所有 list/category 配置
         allListConfigs[item.id] = item; 
         if (item.type === 'category') {
             findListById(item.items);
@@ -92,7 +96,7 @@ function normalizeString(str) {
     return str.replace(/～/g, '').replace(/~/g, '').replace(/・/g, '').replace(/\./g, '').replace(/\s/g, '');
 }
 
-// 輔助函式：異步載入外部 JSON 檔案
+// ⭐️ 輔助函式：異步載入外部 JSON 檔案 ⭐️
 async function loadExternalConfig(path) {
     try {
         const response = await fetch(path + '?v=' + new Date().getTime());
@@ -107,6 +111,7 @@ async function loadExternalConfig(path) {
     }
 }
 
+// --- 2. ⭐️ 非同步讀取 (處理多選邏輯) ⭐️ ---
 async function initializeQuiz() {
     // 1. 載入 config
     try {
@@ -120,7 +125,7 @@ async function initializeQuiz() {
         return;
     }
     
-    // 2. 載入並合併外部配置 (關鍵修正)
+    // ⭐️ 2. 載入並合併外部配置 ⭐️
     let initialConfig = config; 
     let finalCatalog = [];
     
@@ -135,7 +140,7 @@ async function initializeQuiz() {
     }
     initialConfig.catalog = finalCatalog; 
     
-    // 3. 收集所有列表配置
+    // ⭐️ 3. 收集所有列表配置
     allListConfigs = {};
     if (initialConfig.catalog) {
         initialConfig.catalog.forEach(item => findListById([item]));
@@ -158,7 +163,7 @@ async function initializeQuiz() {
         return;
     }
 
-    // 4. 模式選擇區 (如果 URL 只有 listName)
+    // ⭐️ 4. 模式選擇區 (如果 URL 只有 listName)
     if (!modeId) {
         if (listConfig.type !== 'list') {
             window.location.href = 'index.html'; 
@@ -182,6 +187,7 @@ async function initializeQuiz() {
         modeButtonContainer.addEventListener('click', (event) => {
             const button = event.target.closest('.option-button');
             if (!button) return;
+            
             const chosenModeId = button.dataset.modeId;
             const url = `quiz.html?list=${listName}&mode_id=${chosenModeId}`;
             window.location.href = url;
@@ -191,7 +197,7 @@ async function initializeQuiz() {
         return;
     }
     
-    // 5. 多選流程處理入口
+    // ⭐️ 5. 多選流程處理入口 (步驟一：選擇列表) ⭐️
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'INITIATE_SELECT') {
         multiSelectEntryConfig = listConfig; 
         hideAllSetupAreas();
@@ -199,7 +205,7 @@ async function initializeQuiz() {
         return; 
     }
     
-    // 5.5. 綜合測驗區的返回
+    // ⭐️ 5.5. 綜合測驗區的返回和繼續流程 ⭐️
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'RESUME_MULTI') {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
@@ -211,7 +217,7 @@ async function initializeQuiz() {
         return; 
     }
     
-    // 6. 載入數據
+    // ⭐️ 6. 載入數據 ⭐️
     const selectedIdsFromUrl = params.get('selected_ids');
     let listIdsToLoad = [];
     let modeConfig = null;
@@ -224,7 +230,7 @@ async function initializeQuiz() {
         listIdsToLoad = [listName];
         modeConfig = listConfig.modes.find(m => m.id === modeId);
     } else {
-        console.warn("檢測到綜合測驗入口但無選定列表，重導向...");
+        // 錯誤狀態：MULTI_SELECT_ENTRY 但無 selected_ids，重導向
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
         setupMultiSelect();
@@ -258,6 +264,7 @@ async function initializeQuiz() {
     }
 
     if (vocabulary.length > 0) {
+        // 9. 設定返回按鈕連結
         let targetUrl;
         if (selectedIdsFromUrl) {
             targetUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIdsFromUrl}`;
@@ -269,6 +276,7 @@ async function initializeQuiz() {
         const returnButtons = document.querySelectorAll('.button-return');
         returnButtons.forEach(btn => btn.href = targetUrl);
 
+        // 10. 顯示 UI
         modeChoiceArea.style.display = 'none';
         
         if (currentMode === 'review') {
@@ -320,7 +328,7 @@ async function initializeQuiz() {
         }
     } else {
         mainArea.style.display = 'flex';
-        mainArea.innerHTML = `<h1>找不到單字數據。</h1><a href="index.html" class="home-button">返回主頁面</a>`;
+        mainArea.innerHTML = `<h1>找不到單字數據。</h1><p>請確認單字庫檔案 (words/${listIdsToLoad.join(', ')}.json) 是否存在。</p><a href="index.html" class="home-button">返回主頁面</a>`;
     }
 }
 
@@ -436,454 +444,3 @@ function startGame() {
     if (examTotalQuestions > vocabulary.length) {
         examTotalQuestions = vocabulary.length;
         alert(`題數超過單字庫總數，已自動設定為最大題數：${vocabulary.length} 題。`);
-    }
-
-    // Shuffle
-    for (let i = vocabulary.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [vocabulary[i], vocabulary[j]] = [vocabulary[j], vocabulary[i]];
-    }
-
-    examCurrentQuestion = 0;
-    examIncorrectCount = 0;
-    testedIndices.clear();
-    updateExamProgress();
-    examIncorrectWords = [];
-    
-    setupApp();
-}
-
-function setupApp() {
-    flashcard.addEventListener('click', flipCard);
-    nextButton.addEventListener('click', handleButtonPress);
-
-    const cardContainer = document.querySelector('.flashcard-container');
-    if (cardContainer) {
-        cardContainer.addEventListener('touchstart', handleTouchStart, false);
-        cardContainer.addEventListener('touchmove', handleTouchMove, false);
-        cardContainer.addEventListener('touchend', handleTouchEnd, false);
-    }
-    
-    document.addEventListener('keydown', handleGlobalKey);
-    
-    if (giveUpButton) {
-        giveUpButton.addEventListener('click', revealAnswer);
-    }
-    
-    if (currentMode === 'quiz') {
-        if(quizInputArea) quizInputArea.style.display = 'block';
-        if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
-        
-        if(giveUpButton) giveUpButton.style.display = 'inline-block';
-        
-        const answerLabelData = BACK_CARD_FIELDS.find(f => f.key === ANSWER_FIELD);
-        const answerLabel = answerLabelData ? answerLabelData.label : "答案";
-        answerInput.placeholder = `請輸入 ${answerLabel}`;
-        
-        if (answerInput) answerInput.focus();
-        
-    } else if (currentMode === 'mcq') {
-        if(quizInputArea) quizInputArea.style.display = 'none';
-        if(mcqOptionsArea) mcqOptionsArea.style.display = 'grid'; 
-        if(giveUpButton) giveUpButton.style.display = 'none'; 
-    } else { 
-        if(quizInputArea) quizInputArea.style.display = 'none';
-        if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
-        if(giveUpButton) giveUpButton.style.display = 'none';
-    }
-    
-    loadNextCard();
-}
-
-function toggleOperationNotes() {
-    const notes = document.getElementById('operation-notes');
-    if (notes) {
-        notes.classList.toggle('expanded');
-    }
-}
-
-async function loadNextCard() {
-    if (isExamMode && examCurrentQuestion >= examTotalQuestions) {
-        showExamResults();
-        return; 
-    }
-    
-    if (flashcard.classList.contains('is-flipped')) {
-        flashcard.classList.remove('is-flipped');
-        await new Promise(resolve => setTimeout(resolve, 610));
-    }
-    
-    let card;
-    let newIndex = currentCardIndex;
-
-    if (isExamMode) {
-        examCurrentQuestion++;
-        updateExamProgress();
-        currentCardMarkedWrong = false; 
-        newIndex = examCurrentQuestion - 1;
-    } else {
-        const oldIndex = currentCardIndex;
-        if (vocabulary.length <= 1) { currentCardIndex = 0; }
-        else {
-            do { currentCardIndex = Math.floor(Math.random() * vocabulary.length); }
-            while (currentCardIndex === oldIndex);
-            newIndex = currentCardIndex;
-        }
-    }
-    
-    card = vocabulary[newIndex];
-    if (!card) return; 
-
-    currentCardData = card;
-
-    cardFront.textContent = card[QUESTION_FIELD] || "";
-    currentCorrectAnswer = card[ANSWER_FIELD] || "";
-
-    let backHtml = '';
-    for (const field of BACK_CARD_FIELDS) {
-        const value = card[field.key];
-        if (value !== undefined && value !== null && value !== "") {
-            const isAnswer = (field.key === ANSWER_FIELD);
-            const valueClass = isAnswer ? "back-value answer" : "back-value";
-            backHtml += `
-                <div class="back-item">
-                    <span class="back-label">${field.label}:</span>
-                    <span class="${valueClass}">${value}</span>
-                </div>
-            `;
-        }
-    }
-    cardBack.innerHTML = backHtml;
-    
-    if (currentMode === 'quiz') {
-        answerInput.value = ""; 
-        answerInput.disabled = false; 
-        answerInput.classList.remove('correct', 'incorrect');
-        nextButton.textContent = "檢查答案"; 
-        nextButton.disabled = false;
-        if (answerInput) answerInput.focus(); 
-        if (giveUpButton) giveUpButton.disabled = false; 
-        
-    } else if (currentMode === 'mcq') {
-        generateMcqOptions();
-        nextButton.textContent = "下一張"; 
-        nextButton.disabled = true; 
-        
-    } else { 
-        nextButton.textContent = "顯示答案"; 
-        nextButton.disabled = false;
-    }
-}
-
-function checkAnswer() {
-    const userInputRaw = answerInput.value.trim();
-    if (!userInputRaw) {
-        answerInput.classList.add('shake');
-        setTimeout(() => answerInput.classList.remove('shake'), 500);
-        return;
-    }
-
-    const normalizedInput = normalizeString(userInputRaw);
-    let isCorrect = false;
-    let correctAnswers = currentCorrectAnswer.split('/').map(s => s.trim());
-    
-    isCorrect = correctAnswers.some(answer => {
-        return normalizeString(answer) === normalizedInput;
-    });
-    
-    if (isCorrect) {
-        answerInput.value = correctAnswers[0].trim();
-        answerInput.classList.add('correct');
-        answerInput.classList.remove('incorrect');
-        answerInput.disabled = true; 
-        nextButton.textContent = "下一張"; 
-        nextButton.disabled = false;
-        if (giveUpButton) giveUpButton.style.display = 'none'; 
-        flipCard(); 
-    } else {
-        answerInput.classList.add('incorrect');
-        answerInput.classList.remove('correct');
-        answerInput.classList.add('shake');
-        setTimeout(() => answerInput.classList.remove('shake'), 500);
-        
-        if (isExamMode && !currentCardMarkedWrong) {
-            examIncorrectCount++;
-            currentCardMarkedWrong = true;
-            examIncorrectWords.push({ 
-                question: currentCardData[QUESTION_FIELD], 
-                answer: currentCorrectAnswer 
-            });
-        }
-        
-        if (giveUpButton) giveUpButton.style.display = 'inline-block';
-    }
-}
-
-function revealAnswer() {
-    if (currentMode === 'quiz' && !flashcard.classList.contains('is-flipped')) {
-        
-        if (isExamMode && !currentCardMarkedWrong) {
-            examIncorrectCount++;
-            currentCardMarkedWrong = true;
-            updateExamProgress();
-            
-            examIncorrectWords.push({ 
-                question: currentCardData[QUESTION_FIELD], 
-                answer: currentCorrectAnswer 
-            });
-        }
-        
-        answerInput.value = currentCorrectAnswer.split('/')[0].trim(); 
-        answerInput.classList.remove('incorrect');
-        answerInput.disabled = true;
-        
-        flipCard();
-        nextButton.textContent = "下一張";
-        nextButton.disabled = false;
-        if (giveUpButton) giveUpButton.style.display = 'none';
-    }
-}
-
-function handleButtonPress() {
-    const buttonState = nextButton.textContent;
-
-    if (currentMode === 'quiz') {
-        if (buttonState === "檢查答案") {
-            checkAnswer();
-        } else { 
-            loadNextCard();
-        }
-    } else if (currentMode === 'review') {
-        if (buttonState === "顯示答案") {
-            flipCard();
-            if (flashcard.classList.contains('is-flipped')) {
-                nextButton.textContent = "下一張";
-            }
-
-        } else { 
-            loadNextCard(); 
-        }
-    } else if (currentMode === 'mcq') {
-        loadNextCard();
-    }
-}
-
-function handleGlobalKey(event) {
-    const isTyping = (currentMode === 'quiz' && document.activeElement === answerInput);
-
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        
-        if (examSetupArea.style.display === 'block' && startExamFinalBtn) {
-            startExamFinalBtn.click(); 
-            return;
-        }
-
-        if (!nextButton.disabled) {
-             handleButtonPress();
-        }
-        return; 
-    }
-    
-    if (currentMode === 'mcq' && !nextButton.disabled) {
-        const keyMap = {
-            'q': 0, 'w': 1, 'e': 2, 'r': 3,
-            'Q': 0, 'W': 1, 'E': 2, 'R': 3,
-            '1': 0, '2': 1, '3': 2, '4': 3,
-            'Numpad1': 0, 'Numpad2': 1, 'Numpad3': 2, 'Numpad4': 3
-        };
-        
-        const key = event.key;
-        const optionIndex = keyMap[key]; 
-        
-        if (optionIndex !== undefined) {
-            event.preventDefault(); 
-            const optionButtons = mcqOptionsArea.querySelectorAll('.mcq-option');
-            if (optionIndex < optionButtons.length) {
-                handleMcqAnswer(optionButtons[optionIndex]); 
-            }
-            return;
-        }
-    }
-
-    if (event.key === 'Shift') {
-        if (isTyping) return; 
-        event.preventDefault();
-        flipCard();
-        return; 
-    }
-}
-
-function flipCard() {
-    const wasFlipped = flashcard.classList.contains('is-flipped');
-    
-    flashcard.classList.toggle('is-flipped');
-    
-    if (wasFlipped && !flashcard.classList.contains('is-flipped')) {
-        if (currentMode === 'review') {
-            nextButton.textContent = "顯示答案"; 
-        } 
-    }
-}
-
-function handleTouchStart(event) {
-    touchStartX = event.changedTouches[0].screenX;
-    touchStartY = event.changedTouches[0].screenY;
-}
-function handleTouchMove(event) {
-    let diffX = Math.abs(event.changedTouches[0].screenX - touchStartX);
-    let diffY = Math.abs(event.changedTouches[0].screenY - touchStartY);
-    if (diffX > diffY) {
-        event.preventDefault();
-    }
-}
-function handleTouchEnd(event) {
-    let touchEndX = event.changedTouches[0].screenX;
-    let touchEndY = event.changedTouches[0].screenY;
-    
-    let swipeDistanceX = touchStartX - touchEndX; 
-    let swipeDistanceY = touchStartY - touchEndY; 
-
-    const minSwipeThreshold = 50; 
-    
-    if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY) && Math.abs(swipeDistanceX) > minSwipeThreshold) {
-        if (swipeDistanceX < 0) {
-            triggerNextCardAction(); 
-        } else { 
-            flipCard();
-        }
-    }
-    touchStartX = 0;
-    touchStartY = 0;
-}
-function triggerNextCardAction() {
-    if (!nextButton.disabled) {
-        handleButtonPress();
-    }
-}
-
-function generateMcqOptions() {
-    const correctAnswer = currentCorrectAnswer;
-    let distractors = [];
-    let options = [];
-    const numDistractorsToFind = Math.min(3, vocabulary.length - 1);
-    let retries = 0;
-    const maxRetries = 20; 
-
-    while (distractors.length < numDistractorsToFind && retries < maxRetries) {
-        retries++; 
-        const randomIndex = Math.floor(Math.random() * vocabulary.length);
-        const randomWord = vocabulary[randomIndex];
-        if (!randomWord[ANSWER_FIELD]) continue; 
-        const distractor = randomWord[ANSWER_FIELD];
-        if (distractor === correctAnswer) continue; 
-        if (distractors.includes(distractor)) continue; 
-        distractors.push(distractor);
-    }
-    options = [correctAnswer, ...distractors];
-    for (let i = options.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [options[i], options[j]] = [options[j], options[i]];
-    }
-    mcqOptionsArea.innerHTML = ''; 
-    
-    options.forEach((option) => {
-        const button = document.createElement('button');
-        button.className = 'mcq-option';
-        button.textContent = option; 
-        button.dataset.answer = option; 
-        button.addEventListener('click', (event) => handleMcqAnswer(event.target)); 
-        mcqOptionsArea.appendChild(button);
-    });
-}
-function handleMcqAnswer(selectedButton) {
-    const selectedAnswer = selectedButton.dataset.answer;
-    
-    const allButtons = mcqOptionsArea.querySelectorAll('button');
-    allButtons.forEach(button => button.disabled = true);
-
-    if (normalizeString(selectedAnswer) === normalizeString(currentCorrectAnswer)) {
-        selectedButton.classList.add('correct');
-    } else {
-        selectedButton.classList.add('incorrect');
-        allButtons.forEach(button => {
-            if (normalizeString(button.dataset.answer) === normalizeString(currentCorrectAnswer)) {
-                button.classList.add('correct');
-            }
-        });
-        
-        if (isExamMode && !currentCardMarkedWrong) {
-            examIncorrectCount++;
-            currentCardMarkedWrong = true;
-            examIncorrectWords.push({ 
-                question: currentCardData[QUESTION_FIELD], 
-                answer: currentCorrectAnswer 
-            });
-        }
-    }
-    
-    nextButton.disabled = false;
-    flipCard();
-}
-
-function updateExamProgress() {
-    if (!isExamMode) {
-        if(examProgress) examProgress.style.display = 'none';
-        return;
-    }
-    
-    if(examProgress) examProgress.style.display = 'flex';
-    let score = 'N/A';
-    if (examCurrentQuestion > 0) {
-        const correctCount = (examCurrentQuestion - examIncorrectCount);
-        score = Math.round((correctCount / examCurrentQuestion) * 100);
-    }
-    
-    examProgress.innerHTML = `
-        <span>題數: ${examCurrentQuestion} / ${examTotalQuestions}</span>
-        <span>答錯: ${examIncorrectCount}</span>
-        <span>分數: ${score === 'N/A' ? 'N/A' : score + '%'}</span>
-    `;
-}
-function showExamResults() {
-    if(mainArea) mainArea.style.display = 'none';
-    if(resultsArea) resultsArea.style.display = 'block';
-
-    const correctCount = examTotalQuestions - examIncorrectCount;
-    const finalScore = Math.round((correctCount / examTotalQuestions) * 100);
-    let message = '';
-    if (finalScore == 100) message = '太完美了！ (Perfect!)';
-    else if (finalScore >= 80) message = '非常厲害！ (Great Job!)';
-    else if (finalScore >= 60) message = '不錯喔！ (Good!)';
-    else message = '再加油！ (Keep Trying!)';
-    
-    let incorrectListHtml = '';
-    if (examIncorrectWords.length > 0) {
-        incorrectListHtml = '<h2>📚 錯誤清單</h2><ul class="incorrect-list">';
-        examIncorrectWords.forEach((word, index) => {
-            incorrectListHtml += `
-                <li>
-                    <strong>${index + 1}. 問題:</strong> ${word.question} <br>
-                    <strong>答案:</strong> <span style="color: #c62828;">${word.answer}</span>
-                </li>
-            `;
-        });
-        incorrectListHtml += '</ul>';
-    }
-    
-    resultsArea.innerHTML = `
-        <h1>考試結束！</h1>
-        <div class="results-summary">
-            <h2>${message}</h2>
-            <div class="final-score">${finalScore}%</div>
-            <p>總題數: ${examTotalQuestions}</p>
-            <p>答對: ${correctCount}</p>
-            <p>答錯: ${examIncorrectCount}</p>
-        </div>
-        ${incorrectListHtml}
-        <a href="javascript:location.reload()" class="option-button review-mode">再考一次</a>
-        <a href="index.html" class="home-button">返回主頁面</a>
-    `;
-}
-
-initializeQuiz();
