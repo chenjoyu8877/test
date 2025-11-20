@@ -15,15 +15,15 @@ const giveUpButton = document.getElementById('give-up-button');
 // 獲取「區域」元素
 const modeChoiceArea = document.getElementById('mode-choice-area');
 const practiceExamChoiceArea = document.getElementById('practice-exam-choice-area');
-const examSetupArea = document.getElementById('exam-setup-area'); 
-const mainArea = document.getElementById('quiz-main-area'); 
+const examSetupArea = document.getElementById('exam-setup-area');
+const mainArea = document.getElementById('quiz-main-area');
 const resultsArea = document.getElementById('exam-results-area');
 
 // 獲取「按鈕」和「標題」
 const modeChoiceTitle = document.getElementById('mode-choice-title');
 const modeButtonContainer = document.getElementById('mode-button-container');
 const practiceExamTitle = document.getElementById('practice-exam-title');
-const examSetupTitle = document.getElementById('exam-setup-title'); 
+const examSetupTitle = document.getElementById('exam-setup-title');
 const startPracticeBtn = document.getElementById('start-practice-btn');
 const startExamSetupBtn = document.getElementById('start-exam-setup-btn');
 const startExamFinalBtn = document.getElementById('start-exam-final-btn');
@@ -56,25 +56,25 @@ let testedIndices = new Set();
 let currentCardMarkedWrong = false;
 
 // 儲存錯題的單字數據
-let examIncorrectWords = []; 
-let currentCardData = {}; 
+let examIncorrectWords = [];
+let currentCardData = {};
 
 // 全局變數
 let QUESTION_FIELD = '';
 let ANSWER_FIELD = '';
 let BACK_CARD_FIELDS = [];
-let vocabulary = []; 
-let currentCardIndex = 0; 
-let currentCorrectAnswer = ""; 
-let currentMode = 'review'; 
+let vocabulary = [];
+let currentCardIndex = 0;
+let currentCorrectAnswer = "";
+let currentMode = 'review';
 let touchStartX = 0;
 let touchStartY = 0;
 
 // 全局狀態
-let allListConfigs = {}; 
-let selectedListIDs = []; 
+let allListConfigs = {};
+let selectedListIDs = [];
 let multiSelectEntryConfig = null;
-let config = null; 
+let config = null;
 
 // 輔助函式：Fisher-Yates 洗牌演算法
 function shuffleArray(array) {
@@ -88,11 +88,36 @@ function shuffleArray(array) {
 function findListById(items) {
     if (!items) return;
     for (const item of items) {
-        allListConfigs[item.id] = item; 
-        if (item.type === 'category') {
-            findListById(item.items);
+        // 注意：如果 JSON 中有多個項目的 ID 相同（例如 N3 有三個項目），
+        // 這裡會發生覆蓋，只保留最後一個。
+        // 但這不影響 fetch 資料，因為 ID 是一樣的。
+        // 影響的是 mode 的查找，所以我們需要下面的 findModeRecursive。
+        allListConfigs[item.id] = item;
+        if (item.type === 'category' || item.type === 'list') {
+             // 修改：有些結構 list 下面可能還有 items (雖然不常見)，或者 category 下面有 items
+             if(item.items) findListById(item.items);
         }
     }
+}
+
+// ⭐️ 新增輔助函式：全域遞迴搜尋模式設定 (解決重複 List ID 覆蓋問題)
+function findModeRecursive(items, targetModeId) {
+    if (!items || !Array.isArray(items)) return null;
+
+    for (const item of items) {
+        // 1. 如果是 List，檢查裡面的 modes
+        if (item.type === 'list' && item.modes) {
+            const foundMode = item.modes.find(m => m.id === targetModeId);
+            if (foundMode) return foundMode;
+        }
+        
+        // 2. 如果是 Category (或任何有 items 的結構)，遞迴搜尋子項目
+        if (item.items) {
+            const foundInChild = findModeRecursive(item.items, targetModeId);
+            if (foundInChild) return foundInChild;
+        }
+    }
+    return null;
 }
 
 // 輔助函式：尋找單字庫在首頁的路徑 (Hash)
@@ -125,7 +150,7 @@ async function loadExternalConfig(path) {
     try {
         const response = await fetch(path + '?v=' + new Date().getTime());
         if (!response.ok) {
-            return []; 
+            return [];
         }
         return await response.json();
     } catch (error) {
@@ -145,7 +170,7 @@ async function initializeQuiz() {
     }
     
     // 載入並合併外部配置
-    let initialConfig = config; 
+    let initialConfig = config;
     let finalCatalog = [];
     
     for (const item of initialConfig.catalog) {
@@ -156,7 +181,7 @@ async function initializeQuiz() {
             finalCatalog.push(item);
         }
     }
-    initialConfig.catalog = finalCatalog; 
+    initialConfig.catalog = finalCatalog;
     
     allListConfigs = {};
     if (initialConfig.catalog) {
@@ -168,8 +193,8 @@ async function initializeQuiz() {
     let modeId = params.get('mode_id');
 
     if (!listName) {
-        modeChoiceArea.style.display = 'none'; 
-        return; 
+        modeChoiceArea.style.display = 'none';
+        return;
     }
     
     const listConfig = allListConfigs[listName];
@@ -182,11 +207,11 @@ async function initializeQuiz() {
     // 4. 模式選擇區 (單一列表)
     if (!modeId) {
         if (listConfig.type !== 'list') {
-            window.location.href = 'index.html'; 
+            window.location.href = 'index.html';
             return;
         }
 
-        modeChoiceTitle.textContent = '選擇測驗模式'; 
+        modeChoiceTitle.textContent = '選擇測驗模式';
         
         const parentHash = findParentHash(initialConfig.catalog, listName);
         const returnBtn = document.querySelector('#mode-choice-area .home-button');
@@ -206,10 +231,10 @@ async function initializeQuiz() {
     
     // 5. 多選流程處理入口
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'INITIATE_SELECT') {
-        multiSelectEntryConfig = listConfig; 
+        multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
         setupMultiSelect();
-        return; 
+        return;
     }
     
     // 5.5. 綜合測驗區的返回
@@ -220,8 +245,8 @@ async function initializeQuiz() {
         if (selectedIdsFromUrl) {
             selectedListIDs = selectedIdsFromUrl.split(',');
         }
-        setupMultiModeChoice(); 
-        return; 
+        setupMultiModeChoice();
+        return;
     }
     
     // 6. 載入數據
@@ -231,16 +256,27 @@ async function initializeQuiz() {
 
     if (selectedIdsFromUrl) {
         listIdsToLoad = selectedIdsFromUrl.split(',');
-        modeConfig = listConfig.modes.find(m => m.id === modeId);
+        // 嘗試先從 current listConfig 找，找不到再遞迴
+        modeConfig = listConfig.modes ? listConfig.modes.find(m => m.id === modeId) : null;
+        if (!modeConfig) {
+             modeConfig = findModeRecursive(initialConfig.catalog, modeId);
+        }
         multiSelectEntryConfig = listConfig;
     } else if (listName !== 'MULTI_SELECT_ENTRY') {
         listIdsToLoad = [listName];
-        modeConfig = listConfig.modes.find(m => m.id === modeId);
+        
+        // ⭐️ 修改：使用全域遞迴搜尋來找模式，確保即使 list ID 重複也能找到正確的 mode
+        modeConfig = findModeRecursive(initialConfig.catalog, modeId);
+        
+        // 備用：如果全域找不到，才嘗試用舊方法 (通常不會發生)
+        if (!modeConfig && listConfig.modes) {
+            modeConfig = listConfig.modes.find(m => m.id === modeId);
+        }
     } else {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
         setupMultiSelect();
-        return; 
+        return;
     }
     
     if (!modeConfig) { throw new Error(`找不到模式 ID: ${modeId}`); }
@@ -254,12 +290,12 @@ async function initializeQuiz() {
     for (const id of listIdsToLoad) {
         try {
             const filePath = `words/${id}.json?v=${new Date().getTime()}`;
-            const response = await fetch(filePath); 
-            if (!response.ok) { 
-                continue; 
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                continue;
             }
             const listData = await response.json();
-            vocabulary.push(...listData); 
+            vocabulary.push(...listData);
         } catch (e) {
             console.error(`載入 ${id}.json 失敗:`, e);
         }
@@ -268,9 +304,9 @@ async function initializeQuiz() {
     if (vocabulary.length > 0) {
         let backToSetupUrl;
         if (selectedIdsFromUrl) {
-            backToSetupUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIdsFromUrl}`; 
+            backToSetupUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIdsFromUrl}`;
         } else {
-            backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`; 
+            backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`;
         }
         
         // 9. 設定通用返回按鈕連結 (預設回設定頁)
@@ -285,10 +321,10 @@ async function initializeQuiz() {
         
         if (currentMode === 'review') {
             isExamMode = false;
-            examSetupArea.style.display = 'none'; 
+            examSetupArea.style.display = 'none';
             practiceExamChoiceArea.style.display = 'none';
-            modeChoiceArea.style.display = 'none'; 
-            mainArea.style.display = 'flex'; 
+            modeChoiceArea.style.display = 'none';
+            mainArea.style.display = 'flex';
             
             const mainAreaReturnBtn = mainArea.querySelector('.button-return');
             if (mainAreaReturnBtn) {
@@ -299,10 +335,14 @@ async function initializeQuiz() {
                 }
             }
             
-            setupApp(); 
+            setupApp();
         } else {
-            isExamMode = false; 
+            isExamMode = false;
             practiceExamChoiceArea.style.display = 'block';
+            
+            // 注意：listConfig 可能因為 ID 重複而是錯誤的那個物件，但 fetch id 是一樣的
+            // 這裡顯示的名字可能會是 "選擇測驗" (如果那是 JSON 裡最後一個該 ID 的項目名稱)
+            // 如果您很介意標題，可以用 modeConfig 的父層名稱，但比較複雜。目前先維持這樣。
             practiceExamTitle.textContent = `${listConfig.name} - ${modeConfig.name}`;
             
             if (singleListSummary) {
@@ -391,7 +431,7 @@ function setupMultiSelect() {
     listCheckboxContainer.addEventListener('change', updateMultiSelectState);
     nextToModeSelectionBtn.onclick = () => {
         hideAllSetupAreas();
-        setupMultiModeChoice(); 
+        setupMultiModeChoice();
     };
     
     // ⭐️ 新增：設定「選擇單字庫頁面」的返回上一層按鈕 ⭐️
@@ -428,9 +468,9 @@ function setupMultiModeChoice() {
 
     const returnButton = multiModeChoiceArea.querySelector('.button-return-to-select-list');
     returnButton.onclick = (event) => {
-        event.preventDefault(); 
+        event.preventDefault();
         hideAllSetupAreas();
-        setupMultiSelect(); 
+        setupMultiSelect();
     };
 
     multiModeButtonContainer.innerHTML = '';
@@ -453,8 +493,8 @@ function setupMultiModeChoice() {
 }
 
 function startGame() {
-    examSetupArea.style.display = 'none'; 
-    mainArea.style.display = 'flex'; 
+    examSetupArea.style.display = 'none';
+    mainArea.style.display = 'flex';
 
     const selectedLength = document.querySelector('input[name="exam-length"]:checked').value;
     
@@ -493,9 +533,9 @@ function startGame() {
     
     let backToSetupUrl;
     if (selectedIds) {
-        backToSetupUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIds}`; 
+        backToSetupUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIds}`;
     } else {
-        backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`; 
+        backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`;
     }
     
     const mainAreaReturnBtn = mainArea.querySelector('.button-return');
@@ -541,9 +581,9 @@ function setupApp() {
         
     } else if (currentMode === 'mcq') {
         if(quizInputArea) quizInputArea.style.display = 'none';
-        if(mcqOptionsArea) mcqOptionsArea.style.display = 'flex'; 
-        if(giveUpButton) giveUpButton.style.display = 'none'; 
-    } else { 
+        if(mcqOptionsArea) mcqOptionsArea.style.display = 'flex';
+        if(giveUpButton) giveUpButton.style.display = 'none';
+    } else {
         if(quizInputArea) quizInputArea.style.display = 'none';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
         if(giveUpButton) giveUpButton.style.display = 'none';
@@ -567,7 +607,7 @@ function toggleOperationNotes() {
 async function loadNextCard() {
     if (isExamMode && examCurrentQuestion >= examTotalQuestions) {
         showExamResults();
-        return; 
+        return;
     }
     
     if (flashcard.classList.contains('is-flipped')) {
@@ -581,7 +621,7 @@ async function loadNextCard() {
     if (isExamMode) {
         examCurrentQuestion++;
         updateExamProgress();
-        currentCardMarkedWrong = false; 
+        currentCardMarkedWrong = false;
         newIndex = examCurrentQuestion - 1;
     } else {
         const oldIndex = currentCardIndex;
@@ -594,7 +634,7 @@ async function loadNextCard() {
     }
     
     card = vocabulary[newIndex];
-    if (!card) return; 
+    if (!card) return;
 
     currentCardData = card;
 
@@ -618,21 +658,21 @@ async function loadNextCard() {
     cardBack.innerHTML = backHtml;
     
     if (currentMode === 'quiz') {
-        answerInput.value = ""; 
-        answerInput.disabled = false; 
+        answerInput.value = "";
+        answerInput.disabled = false;
         answerInput.classList.remove('correct', 'incorrect');
-        nextButton.textContent = "檢查答案"; 
+        nextButton.textContent = "檢查答案";
         nextButton.disabled = false;
-        if (answerInput) answerInput.focus(); 
-        if (giveUpButton) giveUpButton.disabled = false; 
+        if (answerInput) answerInput.focus();
+        if (giveUpButton) giveUpButton.disabled = false;
         
     } else if (currentMode === 'mcq') {
         generateMcqOptions();
-        nextButton.textContent = "下一張"; 
-        nextButton.disabled = true; 
+        nextButton.textContent = "下一張";
+        nextButton.disabled = true;
         
-    } else { 
-        nextButton.textContent = "顯示答案"; 
+    } else {
+        nextButton.textContent = "顯示答案";
         nextButton.disabled = false;
     }
 }
@@ -658,11 +698,11 @@ function checkAnswer() {
         answerInput.value = correctAnswers[0].trim();
         answerInput.classList.add('correct');
         answerInput.classList.remove('incorrect');
-        answerInput.disabled = true; 
-        nextButton.textContent = "下一張"; 
+        answerInput.disabled = true;
+        nextButton.textContent = "下一張";
         nextButton.disabled = false;
-        if (giveUpButton) giveUpButton.style.display = 'none'; 
-        flipCard(); 
+        if (giveUpButton) giveUpButton.style.display = 'none';
+        flipCard();
     } else {
         answerInput.classList.add('incorrect');
         answerInput.classList.remove('correct');
@@ -672,9 +712,9 @@ function checkAnswer() {
         if (isExamMode && !currentCardMarkedWrong) {
             examIncorrectCount++;
             currentCardMarkedWrong = true;
-            examIncorrectWords.push({ 
-                question: currentCardData[QUESTION_FIELD], 
-                answer: currentCorrectAnswer 
+            examIncorrectWords.push({
+                question: currentCardData[QUESTION_FIELD],
+                answer: currentCorrectAnswer
             });
         }
         
@@ -690,13 +730,13 @@ function revealAnswer() {
             currentCardMarkedWrong = true;
             updateExamProgress();
             
-            examIncorrectWords.push({ 
-                question: currentCardData[QUESTION_FIELD], 
-                answer: currentCorrectAnswer 
+            examIncorrectWords.push({
+                question: currentCardData[QUESTION_FIELD],
+                answer: currentCorrectAnswer
             });
         }
         
-        answerInput.value = currentCorrectAnswer.split('/')[0].trim(); 
+        answerInput.value = currentCorrectAnswer.split('/')[0].trim();
         answerInput.classList.remove('incorrect');
         answerInput.disabled = true;
         
@@ -714,7 +754,7 @@ function handleButtonPress() {
     if (currentMode === 'quiz') {
         if (buttonState === "檢查答案") {
             checkAnswer();
-        } else { 
+        } else {
             loadNextCard();
         }
     } else if (currentMode === 'review') {
@@ -724,8 +764,8 @@ function handleButtonPress() {
                 nextButton.textContent = "下一張";
             }
 
-        } else { 
-            loadNextCard(); 
+        } else {
+            loadNextCard();
         }
     } else if (currentMode === 'mcq') {
         loadNextCard();
@@ -739,14 +779,14 @@ function handleGlobalKey(event) {
         event.preventDefault();
         
         if (examSetupArea.style.display === 'block' && startExamFinalBtn) {
-            startExamFinalBtn.click(); 
+            startExamFinalBtn.click();
             return;
         }
 
         if (!nextButton.disabled) {
              handleButtonPress();
         }
-        return; 
+        return;
     }
     
     if (currentMode === 'mcq' && !nextButton.disabled) {
@@ -758,23 +798,23 @@ function handleGlobalKey(event) {
         };
         
         const key = event.key;
-        const optionIndex = keyMap[key]; 
+        const optionIndex = keyMap[key];
         
         if (optionIndex !== undefined) {
-            event.preventDefault(); 
+            event.preventDefault();
             const optionButtons = mcqOptionsArea.querySelectorAll('.mcq-option');
             if (optionIndex < optionButtons.length) {
-                handleMcqAnswer(optionButtons[optionIndex]); 
+                handleMcqAnswer(optionButtons[optionIndex]);
             }
             return;
         }
     }
 
     if (event.key === 'Shift') {
-        if (isTyping) return; 
+        if (isTyping) return;
         event.preventDefault();
         flipCard();
-        return; 
+        return;
     }
 }
 
@@ -785,8 +825,8 @@ function flipCard() {
     
     if (wasFlipped && !flashcard.classList.contains('is-flipped')) {
         if (currentMode === 'review') {
-            nextButton.textContent = "顯示答案"; 
-        } 
+            nextButton.textContent = "顯示答案";
+        }
     }
 }
 
@@ -805,15 +845,15 @@ function handleTouchEnd(event) {
     let touchEndX = event.changedTouches[0].screenX;
     let touchEndY = event.changedTouches[0].screenY;
     
-    let swipeDistanceX = touchStartX - touchEndX; 
-    let swipeDistanceY = touchStartY - touchEndY; 
+    let swipeDistanceX = touchStartX - touchEndX;
+    let swipeDistanceY = touchStartY - touchEndY;
 
-    const minSwipeThreshold = 50; 
+    const minSwipeThreshold = 50;
     
     if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY) && Math.abs(swipeDistanceX) > minSwipeThreshold) {
         if (swipeDistanceX < 0) {
-            triggerNextCardAction(); 
-        } else { 
+            triggerNextCardAction();
+        } else {
             flipCard();
         }
     }
@@ -832,16 +872,16 @@ function generateMcqOptions() {
     let options = [];
     const numDistractorsToFind = Math.min(3, vocabulary.length - 1);
     let retries = 0;
-    const maxRetries = 20; 
+    const maxRetries = 20;
 
     while (distractors.length < numDistractorsToFind && retries < maxRetries) {
-        retries++; 
+        retries++;
         const randomIndex = Math.floor(Math.random() * vocabulary.length);
         const randomWord = vocabulary[randomIndex];
-        if (!randomWord[ANSWER_FIELD]) continue; 
+        if (!randomWord[ANSWER_FIELD]) continue;
         const distractor = randomWord[ANSWER_FIELD];
-        if (distractor === correctAnswer) continue; 
-        if (distractors.includes(distractor)) continue; 
+        if (distractor === correctAnswer) continue;
+        if (distractors.includes(distractor)) continue;
         distractors.push(distractor);
     }
     options = [correctAnswer, ...distractors];
@@ -849,14 +889,14 @@ function generateMcqOptions() {
         const j = Math.floor(Math.random() * (i + 1));
         [options[i], options[j]] = [options[j], options[i]];
     }
-    mcqOptionsArea.innerHTML = ''; 
+    mcqOptionsArea.innerHTML = '';
     
     options.forEach((option) => {
         const button = document.createElement('button');
         button.className = 'mcq-option';
-        button.textContent = option; 
-        button.dataset.answer = option; 
-        button.addEventListener('click', (event) => handleMcqAnswer(event.target)); 
+        button.textContent = option;
+        button.dataset.answer = option;
+        button.addEventListener('click', (event) => handleMcqAnswer(event.target));
         mcqOptionsArea.appendChild(button);
     });
 }
@@ -879,9 +919,9 @@ function handleMcqAnswer(selectedButton) {
         if (isExamMode && !currentCardMarkedWrong) {
             examIncorrectCount++;
             currentCardMarkedWrong = true;
-            examIncorrectWords.push({ 
-                question: currentCardData[QUESTION_FIELD], 
-                answer: currentCorrectAnswer 
+            examIncorrectWords.push({
+                question: currentCardData[QUESTION_FIELD],
+                answer: currentCorrectAnswer
             });
         }
     }
@@ -942,9 +982,9 @@ function showExamResults() {
 
     let backToSetupUrl;
     if (selectedIds) {
-        backToSetupUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIds}`; 
+        backToSetupUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIds}`;
     } else {
-        backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`; 
+        backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`;
     }
 
     resultsArea.innerHTML = `
