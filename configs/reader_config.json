@@ -77,7 +77,7 @@
                     ]
                   },
                   {
-                    "id": "doben17_vocab_review",
+                    "id": "doben17_vocab_review_def",
                     "type": "review",
                     "name": "翻卡複習 (日=>中)",
                     "enabled": true,
@@ -103,7 +103,7 @@
                     ]
                   },
                   {
-                    "id": "doben17_vocab_mcq_def",
+                    "id": "doben17_vocab_mcq",
                     "type": "mcq",
                     "name": "選擇測驗 (中=>日)",
                     "enabled": true,
@@ -206,7 +206,7 @@
                     ]
                   },
                   {
-                    "id": "doben18_vocab_review",
+                    "id": "doben18_vocab_review_def",
                     "type": "review",
                     "name": "翻卡複習 (日=>中)",
                     "enabled": true,
@@ -232,7 +232,7 @@
                     ]
                   },
                   {
-                    "id": "doben18_vocab_mcq_def",
+                    "id": "doben18_vocab_mcq",
                     "type": "mcq",
                     "name": "選擇測驗 (中=>日)",
                     "enabled": true,
