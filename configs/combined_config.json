@@ -17,8 +17,8 @@
             "type": "review",
             "name": "翻卡複習 (中=>日)",
             "enabled": true,
-            "q_field": "kanji", 
-            "a_field": "definition",
+            "q_field": "definition", 
+            "a_field": "kanji",
             "back_fields": [
               { "label": "日文", "key": "kanji" },
               { "label": "意思", "key": "definition" },
@@ -32,8 +32,8 @@
             "type": "review",
             "name": "翻卡複習 (日=>中)",
             "enabled": true,
-            "q_field": "definition", 
-            "a_field": "kanji",
+            "q_field": "kanji", 
+            "a_field": "defition",
             "back_fields": [
               { "label": "日文", "key": "kanji" },
               { "label": "意思", "key": "definition" },
