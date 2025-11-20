@@ -74,7 +74,7 @@
                 ]
               },
               {
-                "id": "n3_mcq_kanji",
+                "id": "n3_mcq_kanji_def",
                 "type": "mcq",
                 "name": "選擇測驗 (中=>日)",
                 "enabled": true,
@@ -168,12 +168,12 @@
                 ]
               },
               {
-                "id": "n4_mcq_kanji",
+                "id": "n4_mcq_kanji_def",
                 "type": "mcq",
                 "name": "選擇測驗 (日=>中)",
                 "enabled": true,
-                "q_field": "kanji",
-                "a_field": "definition",
+                "q_field": "definition",
+                "a_field": "kanji",
                 "back_fields": [
                   { "label": "平假名", "key": "hiragana" },
                   { "label": "音調", "key": "pitch" },
@@ -255,7 +255,7 @@
                 ]
               },
               {
-                "id": "n5_mcq_kanji",
+                "id": "n5_mcq_kanji_def",
                 "type": "mcq",
                 "name": "選擇測驗 (日=>中)",
                 "enabled": true,
