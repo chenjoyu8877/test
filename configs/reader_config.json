@@ -68,8 +68,8 @@
                     "type": "review",
                     "name": "翻卡複習 (中=>日)",
                     "enabled": true,
-                    "q_field": "chinese",
-                    "a_field": "japanese",
+                    "q_field": "definition",
+                    "a_field": "kanji",
                     "back_fields": [
                       { "label": "日文", "key": "kanji" },
                       { "label": "平假名", "key": "hiragana" },
