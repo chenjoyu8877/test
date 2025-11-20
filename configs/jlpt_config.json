@@ -189,4 +189,45 @@
                 "q_field": "definition",
                 "back_fields": [
                   { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana
+                  { "label": "平假名", "key": "hiragana" },
+                  { "label": "音調", "key": "pitch" },
+                  { "label": "詞性", "key": "type" }
+                ]
+              },
+              {
+                "id": "n5_quiz_def",
+                "type": "quiz",
+                "name": "輸入測驗 (中=>日)",
+                "enabled": true,
+                "q_field": "definition",
+                "a_field": "kanji",
+                "back_fields": [
+                  { "label": "日文", "key": "kanji" },
+                  { "label": "平假名", "key": "hiragana" },
+                  { "label": "音調", "key": "pitch" },
+                  { "label": "意思", "key": "definition" },
+                  { "label": "詞性", "key": "type" }
+                ]
+              },
+              {
+                "id": "n5_mcq_kanji",
+                "type": "mcq",
+                "name": "選擇測驗 (日=>中)",
+                "enabled": true,
+                "q_field": "kanji",
+                "a_field": "definition",
+                "back_fields": [
+                  { "label": "平假名", "key": "hiragana" },
+                  { "label": "音調", "key": "pitch" },
+                  { "label": "意思", "key": "definition" },
+                  { "label": "詞性", "key": "type" },
+                  { "label": "漢字", "key": "kanji" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
