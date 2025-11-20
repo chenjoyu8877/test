@@ -120,8 +120,8 @@
                     "type": "mcq",
                     "name": "選擇測驗 (日=>中)",
                     "enabled": true,
-                    "q_field": "definition",
-                    "a_field": "kanji", 
+                    "q_field": "kanji",
+                    "a_field": "definition", 
                     "back_fields": [
                       { "label": "日文", "key": "kanji" },
                       { "label": "平假名", "key": "hiragana" },
