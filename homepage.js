@@ -5,45 +5,35 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let globalConfig = null; // 儲存 config.json
+let allListConfigs = {}; 
 
-// 輔助函式：異步載入外部 JSON 檔案 
-async function loadExternalConfig(path) {
-    try {
-        const response = await fetch(path + '?v=' + new Date().getTime());
-        if (!response.ok) {
-            console.error(`無法讀取外部配置: ${path}`, response.statusText);
-            return []; 
+// ⭐️ 輔助函式：遞迴收集所有 list ID (單一設定檔模式專用)
+function collectAllListConfigs(items) {
+    if (!items) return;
+    for (const item of items) {
+        if (item.type === 'list' && item.enabled !== false) {
+            allListConfigs[item.id] = { name: item.name, modes: item.modes };
         }
-        return await response.json();
-    } catch (error) {
-        console.error(`載入外部配置失敗: ${path}`, error);
-        return [];
+        if (item.type === 'category') {
+            collectAllListConfigs(item.items);
+        }
     }
 }
 
 async function renderHomePage() {
     try {
         if (!globalConfig) {
+            // 1. 讀取 config.json
             const response = await fetch('config.json?v=' + new Date().getTime());
             if (!response.ok) {
                 throw new Error('無法讀取 config.json');
             }
-            let initialConfig = await response.json();
-            
-            // 核心合併邏輯
-            let finalCatalog = [];
-            for (const item of initialConfig.catalog) {
-                if (item.type === 'external_category' && item.path) {
-                    const externalItems = await loadExternalConfig(item.path);
-                    finalCatalog.push(...externalItems);
-                } else {
-                    finalCatalog.push(item);
-                }
-            }
-
-            initialConfig.catalog = finalCatalog; 
-            globalConfig = initialConfig;
+            globalConfig = await response.json();
             document.title = globalConfig.siteTitle || '單字卡練習';
+            
+            // 2. 收集設定 (用於 Quiz 頁面查找)
+            allListConfigs = {};
+            collectAllListConfigs(globalConfig.catalog);
         }
 
         const container = document.getElementById('list-container');
@@ -52,9 +42,10 @@ async function renderHomePage() {
         
         if (!container || !mainTitle || !breadcrumbs) return;
 
+        // 3. 解析 URL Hash 來決定當前層級
         const path = window.location.hash.substring(1).split('/');
         
-        let currentLevelItems = globalConfig.catalog; 
+        let currentLevelItems = globalConfig.catalog;
         let currentCategory = null;
         let pathSegments = []; 
         let currentHash = '#';
@@ -66,72 +57,86 @@ async function renderHomePage() {
                 currentLevelItems = found.items;
                 currentCategory = found;
                 currentHash += segment + '/';
-                pathSegments.push({ name: found.name, hash: currentHash });
-            } else {
-                window.location.hash = '';
-                return;
+                pathSegments.push({ name: found.name, hash: currentHash.slice(0, -1) });
             }
         }
 
-        // 渲染麵包屑
-        breadcrumbs.innerHTML = `<li><a href="#" onclick="window.location.hash=''; return false;">首頁</a></li>`;
-        if (pathSegments.length > 0) {
-            pathSegments.forEach((segment, index) => {
-                const isActive = index === pathSegments.length - 1;
-                breadcrumbs.innerHTML += `
-                    <li>
-                        ${isActive ? 
-                            `<span>${segment.name}</span>` : 
-                            `<a href="${segment.hash}">${segment.name}</a>`
-                        }
-                    </li>
-                `;
-            });
-        }
-
+        // 4. 渲染標題與麵包屑
         mainTitle.textContent = currentCategory ? currentCategory.name : globalConfig.siteTitle;
 
-        // 渲染內容
-        let allHtml = '';
-        if (currentLevelItems) {
-            for (const item of currentLevelItems) {
-                if (!item.enabled) continue; 
-                
-                // 統一按鈕樣式：無論是 Category 還是 List，都使用 option-button list-button
-                let targetHref = "javascript:void(0);";
-                let actionData = "";
-                
-                if (item.type === 'category') {
-                    // 分類：點擊後在當前頁面導航 (修改 Hash)
-                    const targetHash = (currentHash.substring(1) ? currentHash.substring(1) + '/' : '') + item.id;
-                    actionData = `data-action="navigate" data-target-hash="${targetHash}"`;
-                } 
-                else if (item.type === 'list') {
-                    // 單字庫：點擊後跳轉到 quiz.html 進行模式選擇
-                    let url = `quiz.html?list=${item.id}`;
-                    
-                    // 特殊處理：綜合測驗區入口需要額外參數
-                    if (item.id === 'MULTI_SELECT_ENTRY') {
-                        url += `&mode_id=INITIATE_SELECT`;
-                    }
-                    
-                    targetHref = url;
-                }
+        breadcrumbs.innerHTML = '<li><a href="#">首頁</a></li>';
+        pathSegments.forEach(segment => {
+            breadcrumbs.innerHTML += `<li><a href="${segment.hash}">${segment.name}</a></li>`;
+        });
 
-                // ⭐️ 統一渲染為深色長條按鈕 ⭐️
+        // 5. 渲染導航按鈕 (返回上一層 & 返回主選單) ⭐️
+        let allHtml = ''; 
+        if (currentCategory) { 
+            let parentHash = '#'; 
+            if (pathSegments.length > 1) {
+                parentHash = pathSegments[pathSegments.length - 2].hash;
+            }
+            
+            // ⭐️ 使用 Flexbox 讓兩個按鈕並排顯示 ⭐️
+            allHtml += `
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <a href="${parentHash}" class="option-button back-button" style="flex: 1; text-align: center; min-height: 50px; display: flex; align-items: center; justify-content: center;">
+                        &larr; 返回上一層
+                    </a>
+                    <a href="#" onclick="window.location.hash=''; return false;" class="option-button back-button" style="flex: 1; text-align: center; min-height: 50px; display: flex; align-items: center; justify-content: center; background-color: #7f8c8d;">
+                        🏠 返回主選單
+                    </a>
+                </div>
+            `;
+        }
+
+        // 6. 渲染列表項目
+        for (const item of currentLevelItems) {
+            
+            if (item.enabled === false) continue;
+
+            if (item.type === 'category') {
+                // --- 資料夾 (JLPT, 讀本等) ---
+                const targetHash = (currentHash.substring(1) ? currentHash.substring(1) + '/' : '') + item.id;
+                
                 allHtml += `
-                    <a href="${targetHref}" 
+                    <a href="javascript:void(0);" 
                        class="option-button list-button" 
-                       ${actionData}
+                       data-action="navigate" 
+                       data-item-id="${item.id}"
+                       data-target-hash="${targetHash}"
                        style="display: flex; justify-content: center; align-items: center; text-decoration: none; margin-bottom: 10px; min-height: 50px;">
                         ${item.name}
                     </a>
                 `;
+            } else if (item.type === 'list') {
+                // --- 單字庫 ---
+                
+                // ⭐️ 特殊處理：自選多庫入口 (紫色按鈕) ⭐️
+                if (item.id === 'MULTI_SELECT_ENTRY') {
+                    allHtml += `
+                        <a href="quiz.html?list=${item.id}&mode_id=INITIATE_SELECT" 
+                           class="option-button list-button mcq-mode" 
+                           style="display: flex; justify-content: center; align-items: center; text-decoration: none; margin-bottom: 10px; min-height: 50px;">
+                            ${item.name}
+                        </a>
+                    `;
+                } else {
+                    // ⭐️ 一般單字庫 (統一使用深色按鈕樣式，點擊後跳轉到 quiz.html) ⭐️
+                    allHtml += `
+                        <a href="quiz.html?list=${item.id}" 
+                           class="option-button list-button" 
+                           style="display: flex; justify-content: center; align-items: center; text-decoration: none; margin-bottom: 10px; min-height: 50px;">
+                            ${item.name}
+                        </a>
+                    `;
+                }
             }
         }
         
         container.innerHTML = allHtml;
         
+        // 重新綁定點擊事件
         container.removeEventListener('click', handleHomePageClick); 
         container.addEventListener('click', handleHomePageClick); 
 
@@ -139,24 +144,29 @@ async function renderHomePage() {
         console.error('載入首頁設定失敗:', error);
         const container = document.getElementById('list-container');
         if (container) {
-            container.innerHTML = '<p>載入設定檔失敗。</p>';
+            // 顯示錯誤訊息以便除錯
+            container.innerHTML = `<p>載入設定檔失敗: ${error.message}</p>`;
         }
     }
 }
 
-// 處理點擊事件 (主要處理分類導航)
+// 7. 處理點擊事件 (主要處理分類導航)
 function handleHomePageClick(event) {
-    const target = event.target.closest('.option-button');
-    if (!target) return;
+    const button = event.target.closest('.option-button'); // 統一監聽 option-button
+    if (!button) return;
 
-    const action = target.dataset.action;
-    const targetHash = target.dataset.targetHash;
-    
-    // 處理分類點擊 (Category Navigation)
+    const action = button.dataset.action;
+    const targetHash = button.dataset.targetHash;
+
+    // 處理分類導航 (JavaScript Hash 切換)
     if (action === 'navigate' && targetHash) {
-        event.preventDefault(); 
+        event.preventDefault();
         window.location.hash = targetHash;
+        return;
     }
-    
-    // 一般 List 的 href 跳轉由瀏覽器預設處理，不需要 JS 干預
+
+    // 處理單字庫跳轉 (MULTI_SELECT_ENTRY 和一般單字庫)
+    // 因為我們已經在 HTML 中使用了正確的 href (例如 quiz.html?list=...), 
+    // 這裡其實不需要額外的 JS 處理，除非我們要攔截它做特殊邏輯。
+    // 目前的 href 會由瀏覽器自動處理跳轉。
 }
