@@ -57,7 +57,7 @@ let currentCardMarkedWrong = false;
 
 // 儲存錯題的單字數據
 let examIncorrectWords = []; 
-let currentCardData = {}; // 儲存當前卡片數據
+let currentCardData = {}; 
 
 // 全局變數
 let QUESTION_FIELD = '';
@@ -74,7 +74,9 @@ let touchStartY = 0;
 let allListConfigs = {}; 
 let selectedListIDs = []; 
 let multiSelectEntryConfig = null;
-let config = null; // 儲存 config.json 數據
+let config = null; 
+// ⭐️ 新增狀態旗標：防止事件重複綁定 ⭐️
+let isListenersAttached = false;
 
 // 輔助函式：Fisher-Yates 洗牌演算法
 function shuffleArray(array) {
@@ -93,26 +95,6 @@ function findListById(items) {
             findListById(item.items);
         }
     }
-}
-
-// ⭐️ 新增輔助函式：遞迴尋找單字庫的父層 Hash (用於返回按鈕) ⭐️
-function findParentHash(items, targetListId, currentPath = '#') {
-    if (!items) return null;
-    
-    for (const item of items) {
-        if (item.type === 'list' && item.id === targetListId) {
-            // 找到了目標 List，回傳當前的路徑 (移除最後的斜線)
-            return currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
-        }
-        
-        if (item.type === 'category') {
-            // 進入子層，路徑加上 category id
-            const newPath = currentPath + (currentPath === '#' ? '' : '/') + item.id;
-            const found = findParentHash(item.items, targetListId, newPath);
-            if (found) return found;
-        }
-    }
-    return null;
 }
 
 // 輔助函式：正規化字串
@@ -139,7 +121,6 @@ async function loadExternalConfig(path) {
 
 // --- 2. 非同步讀取 (處理多選邏輯) ---
 async function initializeQuiz() {
-    // 1. 載入 config
     try {
         const configResponse = await fetch('config.json?v=' + new Date().getTime());
         if (!configResponse.ok) { throw new Error('無法讀取 config.json'); }
@@ -151,7 +132,6 @@ async function initializeQuiz() {
         return;
     }
     
-    // 2. 載入並合併外部配置
     let initialConfig = config; 
     let finalCatalog = [];
     
@@ -166,13 +146,11 @@ async function initializeQuiz() {
     }
     initialConfig.catalog = finalCatalog; 
     
-    // 3. 收集所有列表配置
     allListConfigs = {};
     if (initialConfig.catalog) {
         initialConfig.catalog.forEach(item => findListById([item]));
     }
     
-    // 4. 獲取 URL 參數
     const params = new URLSearchParams(window.location.search);
     const listName = params.get('list');
     let modeId = params.get('mode_id');
@@ -189,7 +167,6 @@ async function initializeQuiz() {
         return;
     }
 
-    // ⭐️ 4. 模式選擇區 (如果 URL 只有 listName) ⭐️
     if (!modeId) {
         if (listConfig.type !== 'list') {
             window.location.href = 'index.html'; 
@@ -197,16 +174,6 @@ async function initializeQuiz() {
         }
 
         modeChoiceTitle.textContent = '選擇測驗模式'; 
-        
-        // ⭐️ FIX 1: 動態計算返回按鈕的連結 ⭐️
-        const parentHash = findParentHash(initialConfig.catalog, listName);
-        const returnBtn = document.querySelector('#mode-choice-area .home-button');
-        if (returnBtn) {
-            // 如果找到父層 Hash (如 #jlpt/n3)，就回那裡；否則回首頁
-            returnBtn.href = parentHash ? `index.html${parentHash}` : 'index.html';
-            returnBtn.textContent = '返回列表'; // 修改文字使其更貼切
-        }
-
         let buttonHtml = '';
         if (listConfig.modes && Array.isArray(listConfig.modes)) {
             for (const mode of listConfig.modes) {
@@ -232,7 +199,6 @@ async function initializeQuiz() {
         return;
     }
     
-    // 5. 多選流程處理入口
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'INITIATE_SELECT') {
         multiSelectEntryConfig = listConfig; 
         hideAllSetupAreas();
@@ -240,7 +206,6 @@ async function initializeQuiz() {
         return; 
     }
     
-    // 5.5. 綜合測驗區的返回和繼續流程
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'RESUME_MULTI') {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
@@ -252,7 +217,6 @@ async function initializeQuiz() {
         return; 
     }
     
-    // 6. 載入數據
     const selectedIdsFromUrl = params.get('selected_ids');
     let listIdsToLoad = [];
     let modeConfig = null;
@@ -273,13 +237,11 @@ async function initializeQuiz() {
     
     if (!modeConfig) { throw new Error(`找不到模式 ID: ${modeId}`); }
 
-    // 7. 設定全局變數
     currentMode = modeConfig.type;
     QUESTION_FIELD = modeConfig.q_field;
     ANSWER_FIELD = modeConfig.a_field || '';
     BACK_CARD_FIELDS = modeConfig.back_fields || [];
     
-    // 8. 載入單字庫數據
     vocabulary = [];
     for (const id of listIdsToLoad) {
         try {
@@ -298,7 +260,6 @@ async function initializeQuiz() {
     }
 
     if (vocabulary.length > 0) {
-        // 9. 設定返回按鈕連結
         let targetUrl;
         if (selectedIdsFromUrl) {
             targetUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIdsFromUrl}`;
@@ -310,7 +271,6 @@ async function initializeQuiz() {
         const returnButtons = document.querySelectorAll('.button-return');
         returnButtons.forEach(btn => btn.href = targetUrl);
 
-        // 10. 顯示 UI
         modeChoiceArea.style.display = 'none';
         
         if (currentMode === 'review') {
@@ -480,7 +440,7 @@ function startGame() {
         alert(`題數超過單字庫總數，已自動設定為最大題數：${vocabulary.length} 題。`);
     }
 
-    // Shuffle
+    // 進入考試前先洗牌，確保每次題目順序不同
     shuffleArray(vocabulary);
 
     examCurrentQuestion = 0;
@@ -503,20 +463,28 @@ function setupApp() {
         cardContainer.addEventListener('touchend', handleTouchEnd, false);
     }
     
-    // 綁定鍵盤事件到 document
-    document.addEventListener('keydown', handleGlobalKey);
-    
-    if (giveUpButton) {
-        giveUpButton.addEventListener('click', revealAnswer);
-    }
-    
-    if (operationToggle) {
-        operationToggle.addEventListener('click', toggleOperationNotes);
+    // ⭐️ 修正：只在第一次 setupApp 時綁定監聽器，避免重複綁定 ⭐️
+    if (!isListenersAttached) {
+        // 綁定鍵盤事件到 document
+        document.addEventListener('keydown', handleGlobalKey);
+        
+        if (giveUpButton) {
+            giveUpButton.addEventListener('click', revealAnswer);
+        }
+        
+        if (operationToggle) {
+            operationToggle.addEventListener('click', toggleOperationNotes);
+        }
+        
+        isListenersAttached = true;
     }
     
     if (currentMode === 'quiz') {
         if(quizInputArea) quizInputArea.style.display = 'block';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
+        
+        if(giveUpButton) giveUpButton.style.display = 'inline-block';
+        
         const answerLabelData = BACK_CARD_FIELDS.find(f => f.key === ANSWER_FIELD);
         const answerLabel = answerLabelData ? answerLabelData.label : "答案";
         answerInput.placeholder = `請輸入 ${answerLabel}`;
@@ -526,9 +494,11 @@ function setupApp() {
     } else if (currentMode === 'mcq') {
         if(quizInputArea) quizInputArea.style.display = 'none';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'flex'; 
+        if(giveUpButton) giveUpButton.style.display = 'none'; 
     } else { 
         if(quizInputArea) quizInputArea.style.display = 'none';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
+        if(giveUpButton) giveUpButton.style.display = 'none';
     }
     
     loadNextCard();
@@ -564,6 +534,7 @@ async function loadNextCard() {
         examCurrentQuestion++;
         updateExamProgress();
         currentCardMarkedWrong = false; 
+        // 考試模式：直接取下一個 (因為已經洗牌過了)
         newIndex = examCurrentQuestion - 1;
     } else {
         const oldIndex = currentCardIndex;
@@ -917,19 +888,6 @@ function showExamResults() {
         incorrectListHtml += '</ul>';
     }
     
-    // ⭐️ FIX 2: 返回按鈕改為回到 "選擇練習或考試" 的頁面 (使用 URL 參數) ⭐️
-    const params = new URLSearchParams(window.location.search);
-    const listName = params.get('list');
-    const modeId = params.get('mode_id');
-    const selectedIds = params.get('selected_ids');
-
-    let returnUrl;
-    if (selectedIds) {
-        returnUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIds}`; // 多選模式: 回到多選模式選擇頁
-    } else {
-        returnUrl = `quiz.html?list=${listName}&mode_id=${modeId}`; // 單選模式: 回到練習/考試選擇頁
-    }
-
     resultsArea.innerHTML = `
         <h1>考試結束！</h1>
         <div class="results-summary">
@@ -940,9 +898,18 @@ function showExamResults() {
             <p>答錯: ${examIncorrectCount}</p>
         </div>
         ${incorrectListHtml}
-        <a href="javascript:location.reload()" class="option-button review-mode">再考一次</a>
-        <a href="${returnUrl}" class="home-button">返回模式選擇</a>
+        
+        <button id="restart-exam-btn" class="option-button review-mode">再考一次</button>
+        <a href="index.html" class="home-button">返回主頁面</a>
     `;
+    
+    // ⭐️ 綁定重考按鈕事件 ⭐️
+    document.getElementById('restart-exam-btn').addEventListener('click', () => {
+        resultsArea.style.display = 'none';
+        // 因為在考試開始時我們已經設定了 examTotalQuestions 和 vocabulary (已洗牌)
+        // 直接呼叫 startGame 即可使用現有設定重新開始 (它會再次洗牌)
+        startGame();
+    });
 }
 
 initializeQuiz();
