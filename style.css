@@ -382,13 +382,13 @@ button#next-button:disabled {
 }
 .shake { animation: shake 0.5s ease-in-out; }
 
-/* ⭐️ 修改：MCQ 選項按鈕區塊 (改回單欄垂直排列) ⭐️ */
+/* ⭐️ 修正：MCQ 選項按鈕區塊 (垂直排列) ⭐️ */
 .mcq-options-section {
     display: none; 
     width: 100%;
     max-width: 320px; 
     margin: 15px 0;
-    display: flex;           /* 使用 Flex */
+    display: flex;           
     flex-direction: column;  /* 垂直排列 */
     gap: 10px;
 }
@@ -404,10 +404,10 @@ button.mcq-option {
     cursor: pointer;
     transition: all 0.2s ease;
     
-    /* ⭐️ 核心修正：將文字靠左對齊 ⭐️ */
+    /* 文字靠左對齊 */
     text-align: left; 
     display: flex;
-    align-items: center; /* 垂直置中 */
+    align-items: center; 
 }
 button.mcq-option:hover:not(:disabled) {
     border-color: #4a90e2;
@@ -523,7 +523,8 @@ button.mcq-option.incorrect {
     margin-bottom: 5px;
     line-height: 1.5;
 }
-.expanded #toggle-icon {
+/* ⭐️ 修正：當按鈕擁有 .expanded 類別時，旋轉其內部的圖標 ⭐️ */
+#operation-toggle.expanded #toggle-icon {
     transform: rotate(180deg);
 }
 
