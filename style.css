@@ -382,19 +382,21 @@ button#next-button:disabled {
 }
 .shake { animation: shake 0.5s ease-in-out; }
 
-/* ⭐️ 修正：MCQ 選項按鈕區塊 (垂直排列) ⭐️ */
+/* ⭐️ 修正：MCQ 選項按鈕 (垂直排列，長條狀) ⭐️ */
 .mcq-options-section {
     display: none; 
     width: 100%;
     max-width: 320px; 
     margin: 15px 0;
-    display: flex;           
-    flex-direction: column;  /* 垂直排列 */
+    
+    /* 使用 Flex 實現垂直排列 */
+    display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 button.mcq-option {
     width: 100%;
-    min-height: 50px;
+    min-height: 50px; /* 調整高度 */
     padding: 12px 15px;
     font-size: 16px;
     color: #333;
@@ -407,7 +409,7 @@ button.mcq-option {
     /* 文字靠左對齊 */
     text-align: left; 
     display: flex;
-    align-items: center; 
+    align-items: center; /* 內容垂直置中 */
 }
 button.mcq-option:hover:not(:disabled) {
     border-color: #4a90e2;
@@ -462,7 +464,7 @@ button.mcq-option.incorrect {
 
 /* --- 8. ⭐️ 操作註解區塊 (operation-notes) ⭐️ */
 
-/* 新增：切換按鈕的樣式 */
+/* 按鈕樣式 */
 #operation-toggle {
     width: 100%;
     max-width: 320px;
@@ -490,7 +492,7 @@ button.mcq-option.incorrect {
     transition: transform 0.3s ease;
 }
 
-/* operation-notes 區塊的樣式 - 負責展開/收合 */
+/* 內容區域樣式 (預設隱藏) */
 #operation-notes {
     width: 100%;
     max-width: 320px;
@@ -503,17 +505,27 @@ button.mcq-option.incorrect {
     font-size: 14px;
     background-color: #f7f7f7;
     
+    /* 動畫相關設定 */
     max-height: 0; 
     overflow: hidden;
     opacity: 0;
     transition: max-height 0.4s ease-out, opacity 0.4s ease-out, padding 0.4s ease-out;
 }
+
+/* ⭐️ 展開狀態的樣式 ⭐️ */
+/* 當內容區域有 .expanded 時，顯示內容 */
 #operation-notes.expanded {
     max-height: 200px; 
     padding: 15px; 
     opacity: 1;
     border-color: #ddd;
 }
+
+/* ⭐️ 當按鈕有 .expanded 時，旋轉圖標 ⭐️ */
+#operation-toggle.expanded #toggle-icon {
+    transform: rotate(180deg);
+}
+
 #operation-notes ul {
     list-style: none;
     padding-left: 0;
@@ -522,10 +534,6 @@ button.mcq-option.incorrect {
 #operation-notes ul li {
     margin-bottom: 5px;
     line-height: 1.5;
-}
-/* ⭐️ 修正：當按鈕擁有 .expanded 類別時，旋轉其內部的圖標 ⭐️ */
-#operation-toggle.expanded #toggle-icon {
-    transform: rotate(180deg);
 }
 
 /* --- 9. 隱藏焦點框 (Focus Ring) --- */
