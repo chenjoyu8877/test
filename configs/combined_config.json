@@ -10,7 +10,7 @@
         "type": "list",
         "id": "MULTI_SELECT_ENTRY",
         "enabled": true,
-        "available_lists": ["N3", "N4"],
+        "available_lists": ["N3", "N4","N5"],
         "modes": [
           {
             "id": "multi_quiz_review",
