@@ -12,7 +12,7 @@
         "enabled": true,
         "items": [
           {
-            "name": "N3 單字",
+            "name": "N3 單字庫",
             "type": "list",
             "id": "N3",
             "enabled": true,
@@ -91,7 +91,7 @@
         "enabled": true,
         "items": [
           {
-            "name": "N4 單字",
+            "name": "N4 單字庫",
             "type": "list",
             "id": "N4",
             "enabled": true,
@@ -155,7 +155,38 @@
             ]
           }
         ]
-      }
-    ]
-  }
-]
+      },
+      {
+        "name": "N5",
+        "type": "category",
+        "id": "n5",
+        "enabled": true,
+        "items": [
+          {
+            "name": "N5 單字庫",
+            "type": "list",
+            "id": "N5",
+            "enabled": true,
+            "modes": [
+              {
+                "id": "n5_review_kanji",
+                "type": "review",
+                "name": "翻卡複習 (日=>中)",
+                "enabled": true,
+                "q_field": "kanji",
+                "back_fields": [
+                  { "label": "意思", "key": "definition" },
+                  { "label": "平假名", "key": "hiragana" },
+                  { "label": "音調", "key": "pitch" },
+                  { "label": "詞性", "key": "type" }
+                ]
+              },
+              {
+                "id": "n5_review_def",
+                "type": "review",
+                "name": "翻卡複習 (中=>日)",
+                "enabled": true,
+                "q_field": "definition",
+                "back_fields": [
+                  { "label": "漢字", "key": "kanji" },
+                  { "label": "平假名", "key": "hiragana
