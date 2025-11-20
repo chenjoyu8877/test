@@ -13,82 +13,105 @@
         "items": [
           {
             "name": "N3 單字",
-            "type": "list",
-            "id": "N3",
+            "type": "category",
+            "id": "n3_vocab_folder",
             "enabled": true,
-            "modes": [
+            "items": [
               {
-                "id": "n3_review",
-                "type": "review",
-                "name": "翻卡複習 (中=>日)",
+                "name": "翻卡複習",
+                "type": "list",
+                "id": "N3",
                 "enabled": true,
-                "q_field": "definition",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                  {
+                    "id": "n3_review",
+                    "type": "review",
+                    "name": "翻卡複習 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  },
+                  {
+                    "id": "n3_review_kanji_def",
+                    "type": "review",
+                    "name": "翻卡複習 (日=>中)",
+                    "enabled": true,
+                    "q_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               },
               {
-                "id": "n3_review_kanji_def",
-                "type": "review",
-                "name": "翻卡複習 (日=>中)",
+                "name": "輸入測驗",
+                "type": "list",
+                "id": "N3",
                 "enabled": true,
-                "q_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
-                ]
-              },
-              
-              {
-                "id": "n3_quiz",
-                "type": "quiz",
-                "name": "輸入測驗 (中=>日)",
-                "enabled": true,
-                "q_field": "definition",
-                "a_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                  {
+                    "id": "n3_quiz",
+                    "type": "quiz",
+                    "name": "輸入測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "a_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               },
               {
-                "id": "n3_mcq_kanji",
-                "type": "mcq",
-                "name": "選擇測驗 (中=>日)",
+                "name": "選擇測驗",
+                "type": "list",
+                "id": "N3",
                 "enabled": true,
-                "q_field": "definition",
-                "a_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
-                ]
-              },
-              {
-                "id": "n3_mcq_kanji_def",
-                "type": "mcq",
-                "name": "選擇測驗 (日=>中)",
-                "enabled": true,
-                "q_field": "kanji",
-                "a_field": "definition",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                   {
+                    "id": "n3_mcq_kanji_def",
+                    "type": "mcq",
+                    "name": "選擇測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "a_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  },
+                  {
+                    "id": "n3_mcq_kanji",
+                    "type": "mcq",
+                    "name": "選擇測驗 (日=>中)",
+                    "enabled": true,
+                    "q_field": "kanji",
+                    "a_field": "definition",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               }
             ]
@@ -110,86 +133,115 @@
         "items": [
           {
             "name": "N4 單字",
-            "type": "list",
-            "id": "N4",
+            "type": "category",
+            "id": "n4_vocab_folder",
             "enabled": true,
-            "modes": [
+            "items": [
               {
-                "id": "n4_review",
-                "type": "review",
-                "name": "翻卡複習 (中=>日)",
+                "name": "翻卡複習",
+                "type": "list",
+                "id": "N4",
                 "enabled": true,
-                "q_field": "definition",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                  {
+                    "id": "n4_review",
+                    "type": "review",
+                    "name": "翻卡複習 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  },
+                  {
+                    "id": "n4_review_kanji_def",
+                    "type": "review",
+                    "name": "翻卡複習 (日=>中)",
+                    "enabled": true,
+                    "q_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               },
               {
-                "id": "n4_review_kanji_def",
-                "type": "review",
-                "name": "翻卡複習 (日=>中)",
+                "name": "輸入測驗",
+                "type": "list",
+                "id": "N4",
                 "enabled": true,
-                "q_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
-                ]
-              },
-              
-              {
-                "id": "n4_quiz",
-                "type": "quiz",
-                "name": "輸入測驗 (中=>日)",
-                "enabled": true,
-                "q_field": "definition",
-                "a_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                  {
+                    "id": "n4_quiz",
+                    "type": "quiz",
+                    "name": "輸入測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "a_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               },
               {
-                "id": "n4_mcq_kanji_def",
-                "type": "mcq",
-                "name": "選擇測驗 (中=>日)",
+                "name": "選擇測驗",
+                "type": "list",
+                "id": "N4",
                 "enabled": true,
-                "q_field": "definition",
-                "a_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
-                ]
-              },
-              {
-                "id": "n4_mcq_kanji",
-                "type": "mcq",
-                "name": "選擇測驗 (日=>中)",
-                "enabled": true,
-                "q_field": "kanji",
-                "a_field": "definition",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                   {
+                    "id": "n4_mcq_kanji_def",
+                    "type": "mcq",
+                    "name": "選擇測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "a_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  },
+                  {
+                    "id": "n4_mcq_kanji",
+                    "type": "mcq",
+                    "name": "選擇測驗 (日=>中)",
+                    "enabled": true,
+                    "q_field": "kanji",
+                    "a_field": "definition",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               }
-              
             ]
+          },
+          {
+            "name": "N4 文法 (準備中)",
+            "type": "list",
+            "id": "N4_grammar",
+            "enabled": true,
+            "modes": []
           }
         ]
       },
@@ -201,86 +253,115 @@
         "items": [
           {
             "name": "N5 單字",
-            "type": "list",
-            "id": "N5",
+            "type": "category",
+            "id": "n5_vocab_folder",
             "enabled": true,
-            "modes": [
+            "items": [
               {
-                "id": "n5_review",
-                "type": "review",
-                "name": "翻卡複習 (中=>日)",
+                "name": "翻卡複習",
+                "type": "list",
+                "id": "N5",
                 "enabled": true,
-                "q_field": "definition",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                  {
+                    "id": "n5_review",
+                    "type": "review",
+                    "name": "翻卡複習 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  },
+                  {
+                    "id": "n5_review_kanji_def",
+                    "type": "review",
+                    "name": "翻卡複習 (日=>中)",
+                    "enabled": true,
+                    "q_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               },
               {
-                "id": "n5_review_kanji_def",
-                "type": "review",
-                "name": "翻卡複習 (日=>中)",
+                "name": "輸入測驗",
+                "type": "list",
+                "id": "N5",
                 "enabled": true,
-                "q_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
-                ]
-              },
-              
-              {
-                "id": "n5_quiz_def",
-                "type": "quiz",
-                "name": "輸入測驗 (中=>日)",
-                "enabled": true,
-                "q_field": "definition",
-                "a_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                  {
+                    "id": "n5_quiz_def",
+                    "type": "quiz",
+                    "name": "輸入測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "a_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               },
               {
-                "id": "n5_mcq_kanji_def",
-                "type": "mcq",
-                "name": "選擇測驗 (中=>日)",
+                "name": "選擇測驗",
+                "type": "list",
+                "id": "N5",
                 "enabled": true,
-                "q_field": "definition",
-                "a_field": "kanji",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
-                ]
-              },
-              {
-                "id": "n5_mcq_kanji",
-                "type": "mcq",
-                "name": "選擇測驗 (日=>中)",
-                "enabled": true,
-                "q_field": "kanji",
-                "a_field": "definition",
-                "back_fields": [
-                  { "label": "中文", "key": "definition" },
-                  { "label": "漢字", "key": "kanji" },
-                  { "label": "平假名", "key": "hiragana" },
-                  { "label": "音調", "key": "pitch" },
-                  { "label": "詞性", "key": "type" }
+                "modes": [
+                   {
+                    "id": "n5_mcq_kanji_def",
+                    "type": "mcq",
+                    "name": "選擇測驗 (中=>日)",
+                    "enabled": true,
+                    "q_field": "definition",
+                    "a_field": "kanji",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  },
+                  {
+                    "id": "n5_mcq_kanji",
+                    "type": "mcq",
+                    "name": "選擇測驗 (日=>中)",
+                    "enabled": true,
+                    "q_field": "kanji",
+                    "a_field": "definition",
+                    "back_fields": [
+                      { "label": "中文", "key": "definition" },
+                      { "label": "漢字", "key": "kanji" },
+                      { "label": "平假名", "key": "hiragana" },
+                      { "label": "音調", "key": "pitch" },
+                      { "label": "詞性", "key": "type" }
+                    ]
+                  }
                 ]
               }
-              
             ]
+          },
+          {
+            "name": "N5 文法 (準備中)",
+            "type": "list",
+            "id": "N5_grammar",
+            "enabled": true,
+            "modes": []
           }
         ]
       }
