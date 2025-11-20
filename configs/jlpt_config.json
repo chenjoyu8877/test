@@ -12,7 +12,7 @@
         "enabled": true,
         "items": [
           {
-            "name": "N3 單字庫",
+            "name": "N3 單字",
             "type": "list",
             "id": "N3",
             "enabled": true,
@@ -91,7 +91,7 @@
         "enabled": true,
         "items": [
           {
-            "name": "N4 單字庫",
+            "name": "N4 單字",
             "type": "list",
             "id": "N4",
             "enabled": true,
