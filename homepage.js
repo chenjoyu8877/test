@@ -30,6 +30,7 @@ async function renderHomePage() {
             }
             let initialConfig = await response.json();
             
+            // 核心合併邏輯
             let finalCatalog = [];
             for (const item of initialConfig.catalog) {
                 if (item.type === 'external_category' && item.path) {
@@ -90,65 +91,42 @@ async function renderHomePage() {
 
         mainTitle.textContent = currentCategory ? currentCategory.name : globalConfig.siteTitle;
 
+        // 渲染內容
         let allHtml = '';
-        if (currentCategory) { 
-            let parentHash = '#'; 
-            if (pathSegments.length > 1) {
-                parentHash = pathSegments[pathSegments.length - 2].hash;
-            }
-            
-            allHtml += `
-                <a href="${parentHash}" class="option-button back-button">
-                    &larr; 返回上一層
-                </a>
-            `;
-        }
-
         if (currentLevelItems) {
             for (const item of currentLevelItems) {
-                if (!item.enabled || item.type === 'external_category') continue; 
+                if (!item.enabled) continue; 
+                
+                // 統一按鈕樣式：無論是 Category 還是 List，都使用 option-button list-button
+                let targetHref = "javascript:void(0);";
+                let actionData = "";
                 
                 if (item.type === 'category') {
+                    // 分類：點擊後在當前頁面導航 (修改 Hash)
                     const targetHash = (currentHash.substring(1) ? currentHash.substring(1) + '/' : '') + item.id;
+                    actionData = `data-action="navigate" data-target-hash="${targetHash}"`;
+                } 
+                else if (item.type === 'list') {
+                    // 單字庫：點擊後跳轉到 quiz.html 進行模式選擇
+                    let url = `quiz.html?list=${item.id}`;
                     
-                    allHtml += `
-                        <a href="javascript:void(0);" 
-                           class="list-item category-item list-button" 
-                           data-action="navigate" 
-                           data-target-hash="${targetHash}">
-                            <h2 class="category-name">${item.name}</h2>
-                        </a>
-                    `;
-                } else if (item.type === 'list') {
+                    // 特殊處理：綜合測驗區入口需要額外參數
                     if (item.id === 'MULTI_SELECT_ENTRY') {
-                         allHtml += `
-                            <a href="quiz.html?list=${item.id}&mode_id=INITIATE_SELECT" 
-                               class="list-item quiz-item list-button mcq-mode list-button-group" 
-                               style="display: flex; justify-content: center; align-items: center; padding: 25px; text-decoration: none;">
-                                <h2 class="list-name" style="color: white; margin: 0;">${item.name}</h2>
-                            </a>
-                        `;
-                    } else {
-                        allHtml += `
-                            <div class="list-item quiz-item">
-                                <h4 class="list-name">${item.name}</h4>
-                                <div class="button-group">
-                        `;
-
-                        if (item.modes && Array.isArray(item.modes)) {
-                            for (const mode of item.modes) {
-                                if (mode.enabled) {
-                                    allHtml += `
-                                        <button class="option-button ${mode.type}-mode" data-list-id="${item.id}" data-mode-id="${mode.id}" data-mode-type="${mode.type}">
-                                            ${mode.name}
-                                        </button>
-                                    `;
-                                }
-                            }
-                        }
-                        allHtml += `</div></div>`;
+                        url += `&mode_id=INITIATE_SELECT`;
                     }
+                    
+                    targetHref = url;
                 }
+
+                // ⭐️ 統一渲染為深色長條按鈕 ⭐️
+                allHtml += `
+                    <a href="${targetHref}" 
+                       class="option-button list-button" 
+                       ${actionData}
+                       style="display: flex; justify-content: center; align-items: center; text-decoration: none; margin-bottom: 10px; min-height: 50px;">
+                        ${item.name}
+                    </a>
+                `;
             }
         }
         
@@ -166,25 +144,19 @@ async function renderHomePage() {
     }
 }
 
+// 處理點擊事件 (主要處理分類導航)
 function handleHomePageClick(event) {
-    const target = event.target.closest('.option-button, .list-item.category-item, .list-button');
+    const target = event.target.closest('.option-button');
     if (!target) return;
 
-    const listId = target.dataset.listId;
-    const modeId = target.dataset.modeId;
     const action = target.dataset.action;
     const targetHash = target.dataset.targetHash;
     
+    // 處理分類點擊 (Category Navigation)
     if (action === 'navigate' && targetHash) {
         event.preventDefault(); 
         window.location.hash = targetHash;
-        return;
     }
-
-    if (listId && modeId) {
-        event.preventDefault(); 
-        const isExam = false; 
-        const url = `quiz.html?list=${listId}&mode_id=${modeId}&exam=${isExam}`;
-        window.location.href = url;
-    }
+    
+    // 一般 List 的 href 跳轉由瀏覽器預設處理，不需要 JS 干預
 }
