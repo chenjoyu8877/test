@@ -541,3 +541,33 @@ button.mcq-option.incorrect {
     outline: none; 
     box-shadow: none; 
 }
+/* --- 10. ⭐️ 全域返回主選單按鈕 ⭐️ --- */
+#global-home-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px; /* 固定在左上角 */
+    width: 45px;
+    height: 45px;
+    background-color: #34495e;
+    color: white;
+    border-radius: 50%; /* 圓形 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    font-size: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 9999; /* 確保浮在最上層 */
+    transition: all 0.3s ease;
+    border: 2px solid white;
+}
+
+#global-home-btn:hover {
+    background-color: #2c3e50;
+    transform: scale(1.1);
+}
+
+/* 調整原本 setup-container 的位置，避免標題被左上角按鈕遮擋 (選擇性) */
+.setup-container h1 {
+    margin-top: 10px; 
+}
