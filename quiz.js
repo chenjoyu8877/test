@@ -7,9 +7,9 @@ const answerInput = document.getElementById('answer-input');
 const quizInputArea = document.getElementById('quiz-input-section');
 const mcqOptionsArea = document.getElementById('mcq-options-section');
 const examProgress = document.getElementById('exam-progress-bar');
-const operationToggle = document.getElementById('operation-toggle');
 
-// ⭐️ FIX: 確保給予變數賦值 ⭐️
+// ⭐️ FIX: 確保在全域獲取 operationToggle，以便事件綁定 ⭐️
+const operationToggle = document.getElementById('operation-toggle');
 const giveUpButton = document.getElementById('give-up-button');
 
 // 獲取「區域」元素
@@ -46,7 +46,6 @@ const singleListSummary = document.getElementById('single-list-summary');
 const qCustomRadio = document.getElementById('qCustomRadio');
 const qCustomInput = document.getElementById('qCustomInput');
 
-
 // 考試模式變數
 let isExamMode = false;
 let examTotalQuestions = 0;
@@ -76,7 +75,7 @@ let selectedListIDs = [];
 let multiSelectEntryConfig = null;
 let config = null; 
 
-// 輔助函式：Fisher-Yates 洗牌演算法
+// 輔助函式
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -84,7 +83,6 @@ function shuffleArray(array) {
     }
 }
 
-// 輔助函式：遞迴收集所有 list ID
 function findListById(items) {
     if (!items) return;
     for (const item of items) {
@@ -95,31 +93,27 @@ function findListById(items) {
     }
 }
 
-// 輔助函式：正規化字串
 function normalizeString(str) {
     if (typeof str !== 'string') str = String(str);
     if (!str) return "";
     return str.replace(/～/g, '').replace(/~/g, '').replace(/・/g, '').replace(/\./g, '').replace(/\s/g, '');
 }
 
-// 輔助函式：異步載入外部 JSON 檔案
 async function loadExternalConfig(path) {
     try {
         const response = await fetch(path + '?v=' + new Date().getTime());
         if (!response.ok) {
-            console.error(`無法讀取外部配置: ${path}`, response.statusText);
             return []; 
         }
         return await response.json();
     } catch (error) {
-        console.error(`載入外部配置失敗: ${path}`, error);
+        console.error(error);
         return [];
     }
 }
 
-// --- 2. 非同步讀取 (處理多選邏輯) ---
+// --- 2. 初始化 ---
 async function initializeQuiz() {
-    // 1. 載入 config
     try {
         const configResponse = await fetch('config.json?v=' + new Date().getTime());
         if (!configResponse.ok) { throw new Error('無法讀取 config.json'); }
@@ -127,17 +121,14 @@ async function initializeQuiz() {
     } catch (error) {
         console.error('載入設定失敗:', error);
         modeChoiceTitle.textContent = '載入設定檔失敗';
-        modeButtonContainer.innerHTML = '<p>請檢查 config.json 檔案。</p>';
         return;
     }
     
-    // 2. 載入並合併外部配置
+    // 載入外部配置
     let initialConfig = config; 
     let finalCatalog = [];
-    
     for (const item of initialConfig.catalog) {
         if (item.type === 'external_category' && item.path) {
-            console.log(`正在載入外部配置: ${item.path}`);
             const externalItems = await loadExternalConfig(item.path);
             finalCatalog.push(...externalItems);
         } else {
@@ -146,13 +137,11 @@ async function initializeQuiz() {
     }
     initialConfig.catalog = finalCatalog; 
     
-    // 3. 收集所有列表配置
     allListConfigs = {};
     if (initialConfig.catalog) {
         initialConfig.catalog.forEach(item => findListById([item]));
     }
     
-    // 4. 獲取 URL 參數
     const params = new URLSearchParams(window.location.search);
     const listName = params.get('list');
     let modeId = params.get('mode_id');
@@ -169,13 +158,13 @@ async function initializeQuiz() {
         return;
     }
 
-    // 4. 模式選擇區
     if (!modeId) {
         if (listConfig.type !== 'list') {
             window.location.href = 'index.html'; 
             return;
         }
-        modeChoiceTitle.textContent = '選擇測驗模式'; // 統一標題
+
+        modeChoiceTitle.textContent = '選擇測驗模式'; 
         let buttonHtml = '';
         if (listConfig.modes && Array.isArray(listConfig.modes)) {
             for (const mode of listConfig.modes) {
@@ -196,11 +185,11 @@ async function initializeQuiz() {
             const url = `quiz.html?list=${listName}&mode_id=${chosenModeId}`;
             window.location.href = url;
         });
+        
         modeChoiceArea.style.display = 'block';
         return;
     }
     
-    // 5. 多選流程處理入口
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'INITIATE_SELECT') {
         multiSelectEntryConfig = listConfig; 
         hideAllSetupAreas();
@@ -208,7 +197,6 @@ async function initializeQuiz() {
         return; 
     }
     
-    // 5.5. 綜合測驗區的返回
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'RESUME_MULTI') {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
@@ -220,7 +208,6 @@ async function initializeQuiz() {
         return; 
     }
     
-    // 6. 載入數據
     const selectedIdsFromUrl = params.get('selected_ids');
     let listIdsToLoad = [];
     let modeConfig = null;
@@ -233,7 +220,6 @@ async function initializeQuiz() {
         listIdsToLoad = [listName];
         modeConfig = listConfig.modes.find(m => m.id === modeId);
     } else {
-        // 錯誤狀態重導向
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
         setupMultiSelect();
@@ -242,32 +228,33 @@ async function initializeQuiz() {
     
     if (!modeConfig) { throw new Error(`找不到模式 ID: ${modeId}`); }
 
-    // 7. 設定全局變數
     currentMode = modeConfig.type;
     QUESTION_FIELD = modeConfig.q_field;
     ANSWER_FIELD = modeConfig.a_field || '';
     BACK_CARD_FIELDS = modeConfig.back_fields || [];
     
-    // 8. 載入單字庫數據
     vocabulary = [];
     for (const id of listIdsToLoad) {
         try {
             const filePath = `words/${id}.json?v=${new Date().getTime()}`;
-            console.log(`嘗試載入: ${filePath}`); 
             const response = await fetch(filePath); 
-            if (!response.ok) { 
-                console.error(`無法讀取 ${id}.json 檔案。`); 
-                continue; 
-            }
+            if (!response.ok) { continue; }
             const listData = await response.json();
-            vocabulary.push(...listData); 
+            
+            // 處理欄位映射 (如果需要)
+            const requiresMapping = (listName === 'MULTI_SELECT_ENTRY');
+            if (requiresMapping && modeConfig.map_to_fields) {
+                // 簡化處理：直接合併，因為欄位名稱目前一致
+                vocabulary.push(...listData);
+            } else {
+                vocabulary.push(...listData); 
+            }
         } catch (e) {
             console.error(`載入 ${id}.json 失敗:`, e);
         }
     }
 
     if (vocabulary.length > 0) {
-        // 9. 設定返回按鈕連結
         let targetUrl;
         if (selectedIdsFromUrl) {
             targetUrl = `quiz.html?list=${listName}&mode_id=RESUME_MULTI&selected_ids=${selectedIdsFromUrl}`;
@@ -279,7 +266,6 @@ async function initializeQuiz() {
         const returnButtons = document.querySelectorAll('.button-return');
         returnButtons.forEach(btn => btn.href = targetUrl);
 
-        // 10. 顯示 UI
         modeChoiceArea.style.display = 'none';
         
         if (currentMode === 'review') {
@@ -292,9 +278,7 @@ async function initializeQuiz() {
         } else {
             isExamMode = false; 
             practiceExamChoiceArea.style.display = 'block';
-            
-            // ⭐️ 修正：將標題統一顯示為 "選擇測驗模式" ⭐️
-            practiceExamTitle.textContent = '選擇測驗模式'; 
+            practiceExamTitle.textContent = `${listConfig.name} - ${modeConfig.name}`;
             
             if (singleListSummary) {
                 let summaryText = "";
@@ -333,7 +317,7 @@ async function initializeQuiz() {
         }
     } else {
         mainArea.style.display = 'flex';
-        mainArea.innerHTML = `<h1>找不到單字數據。</h1><p>請確認單字庫檔案 (words/${listIdsToLoad.join(', ')}.json) 是否存在。</p><a href="index.html" class="home-button">返回主頁面</a>`;
+        mainArea.innerHTML = `<h1>找不到單字數據。</h1><a href="index.html" class="home-button">返回主頁面</a>`;
     }
 }
 
@@ -451,7 +435,6 @@ function startGame() {
         alert(`題數超過單字庫總數，已自動設定為最大題數：${vocabulary.length} 題。`);
     }
 
-    // Shuffle
     shuffleArray(vocabulary);
 
     examCurrentQuestion = 0;
@@ -474,11 +457,17 @@ function setupApp() {
         cardContainer.addEventListener('touchend', handleTouchEnd, false);
     }
     
-    // 綁定鍵盤事件到 document
+    // 綁定鍵盤事件
     document.addEventListener('keydown', handleGlobalKey);
     
+    // 綁定「我不會」按鈕事件
     if (giveUpButton) {
         giveUpButton.addEventListener('click', revealAnswer);
+    }
+    
+    // ⭐️ 修正：綁定操作說明按鈕的事件 ⭐️
+    if (operationToggle) {
+        operationToggle.addEventListener('click', toggleOperationNotes);
     }
     
     if (currentMode === 'quiz') {
@@ -495,7 +484,6 @@ function setupApp() {
         
     } else if (currentMode === 'mcq') {
         if(quizInputArea) quizInputArea.style.display = 'none';
-        // 強制使用 flex 布局
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'flex'; 
         if(giveUpButton) giveUpButton.style.display = 'none'; 
     } else { 
@@ -507,6 +495,7 @@ function setupApp() {
     loadNextCard();
 }
 
+// ⭐️ 修正：同時切換按鈕和內容的狀態 ⭐️
 function toggleOperationNotes() {
     const notes = document.getElementById('operation-notes');
     const toggleBtn = document.getElementById('operation-toggle');
@@ -719,7 +708,6 @@ function handleGlobalKey(event) {
             event.preventDefault(); 
             const optionButtons = mcqOptionsArea.querySelectorAll('.mcq-option');
             if (optionIndex < optionButtons.length) {
-                // ⭐️ 直接呼叫處理函式，避開模擬點擊的限制 ⭐️
                 handleMcqAnswer(optionButtons[optionIndex]); 
             }
             return;
@@ -812,13 +800,10 @@ function generateMcqOptions() {
         button.className = 'mcq-option';
         button.textContent = option; 
         button.dataset.answer = option; 
-        // ⭐️ 點擊事件也改為直接傳遞按鈕元素 ⭐️
         button.addEventListener('click', (event) => handleMcqAnswer(event.target)); 
         mcqOptionsArea.appendChild(button);
     });
 }
-
-// ⭐️ 修正：handleMcqAnswer 接收按鈕元素而非事件 ⭐️
 function handleMcqAnswer(selectedButton) {
     const selectedAnswer = selectedButton.dataset.answer;
     
