@@ -381,19 +381,21 @@ button#next-button:disabled {
   20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 .shake { animation: shake 0.5s ease-in-out; }
+
+/* ⭐️ 修改：MCQ 選項按鈕區塊 (改回單欄垂直排列) ⭐️ */
 .mcq-options-section {
     display: none; 
     width: 100%;
     max-width: 320px; 
     margin: 15px 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;           /* 使用 Flex */
+    flex-direction: column;  /* 垂直排列 */
     gap: 10px;
 }
 button.mcq-option {
     width: 100%;
-    min-height: 60px;
-    padding: 10px;
+    min-height: 50px;
+    padding: 12px 15px;
     font-size: 16px;
     color: #333;
     background-color: #ffffff;
@@ -404,6 +406,8 @@ button.mcq-option {
     
     /* ⭐️ 核心修正：將文字靠左對齊 ⭐️ */
     text-align: left; 
+    display: flex;
+    align-items: center; /* 垂直置中 */
 }
 button.mcq-option:hover:not(:disabled) {
     border-color: #4a90e2;
@@ -522,10 +526,9 @@ button.mcq-option.incorrect {
 .expanded #toggle-icon {
     transform: rotate(180deg);
 }
-/* --- 9. 隱藏焦點框 (Focus Ring) --- */
 
-/* 隱藏 #quiz-main-area 獲得焦點時的系統預設外框 */
+/* --- 9. 隱藏焦點框 (Focus Ring) --- */
 #quiz-main-area:focus {
     outline: none; 
-    box-shadow: none; /* 確保沒有任何陰影或自訂框出現 */
+    box-shadow: none; 
 }
