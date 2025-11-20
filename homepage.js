@@ -108,35 +108,32 @@ async function renderHomePage() {
                 // 處理 Category 類型
                 if (item.type === 'category') {
                     const targetHash = (currentHash.substring(1) ? currentHash.substring(1) + '/' : '') + item.id;
-                    
-                    // ⭐️ 修正：改回使用 option-button list-button 樣式，移除 list-item 容器 ⭐️
-                    // 這樣它就會變回深藍色的按鈕樣式
+                    // 使用 data-action 讓 handleHomePageClick 處理導航
                     allHtml += `
                         <a href="javascript:void(0);" 
-                           class="option-button list-button" 
+                           class="list-item category-item list-button" 
                            data-action="navigate" 
                            data-item-id="${item.id}"
                            data-target-hash="${targetHash}">
-                            ${item.name}
+                            <h2 class="category-name">${item.name}</h2>
                         </a>
                     `;
                 } 
                 // 處理 List 類型 (單字庫)
                 else if (item.type === 'list') {
                     if (item.id === 'MULTI_SELECT_ENTRY') {
-                         // 綜合測驗區入口 (保持特殊樣式，因為它是特殊功能)
+                         // 綜合測驗區入口
                          allHtml += `
                             <a href="quiz.html?list=${item.id}&mode_id=INITIATE_SELECT" 
                                class="list-item quiz-item list-button mcq-mode list-button-group" 
-                               style="display: flex; justify-content: center; align-items: center; padding: 25px; text-decoration: none;">
+                               style="display: flex; justify-content: center; align-items: center; padding: 25px;">
                                 <h2 class="list-name" style="color: white; margin: 0;">${item.name}</h2>
                             </a>
                         `;
                     } else {
-                        // 一般單字庫列表 (保持卡片樣式)
                         allHtml += `
                             <div class="list-item quiz-item">
-                                <h4 class="list-name">${item.name}</h4>
+                                <h2 class="list-name">${item.name}</h2>
                                 <div class="mode-buttons">
                         `;
                         // 渲染模式按鈕
@@ -173,13 +170,13 @@ async function renderHomePage() {
 
 // 處理所有首頁點擊
 function handleHomePageClick(event) {
-    const target = event.target.closest('.option-button, .list-button, .list-item.quiz-item');
+    const target = event.target.closest('.option-button, .list-item.category-item, .list-button');
     if (!target) return;
 
     const listId = target.dataset.listId;
     const modeId = target.dataset.modeId;
     const action = target.dataset.action;
-    // const itemId = target.dataset.itemId; // (變數未使用，移除以保持整潔)
+    const itemId = target.dataset.itemId;
     const targetHash = target.dataset.targetHash;
     
     // 處理分類點擊 (Category Navigation)
