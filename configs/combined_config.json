@@ -6,7 +6,7 @@
     "enabled": true,
     "items": [
       {
-        "name": "自選多庫測驗入口",
+        "name": "JLTP單字",
         "type": "list",
         "id": "MULTI_SELECT_ENTRY",
         "enabled": true,
