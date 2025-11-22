@@ -82,7 +82,7 @@
                 "id": "N3",
                 "enabled": true,
                 "modes": [
-                   {
+                  {
                     "id": "n3_mcq_kanji_def",
                     "type": "mcq",
                     "name": "選擇測驗 (中=>日)",
@@ -202,7 +202,7 @@
                 "id": "N4",
                 "enabled": true,
                 "modes": [
-                   {
+                  {
                     "id": "n4_mcq_kanji_def",
                     "type": "mcq",
                     "name": "選擇測驗 (中=>日)",
@@ -237,11 +237,52 @@
             ]
           },
           {
-            "name": "N4 文法 (準備中)",
-            "type": "list",
-            "id": "N4_grammar",
+            "name": "N4 文法",
+            "type": "category",
+            "id": "n4_grammar_folder",
             "enabled": true,
-            "modes": []
+            "items": [
+              {
+                "name": "輸入測驗",
+                "type": "list",
+                "id": "N4gram",
+                "enabled": true,
+                "modes": [
+                  {
+                    "id": "n4_gram_quiz",
+                    "type": "quiz",
+                    "name": "文法練習 (輸入)",
+                    "enabled": true,
+                    "q_field": "qs",
+                    "a_field": "ans",
+                    "back_fields": [
+                      { "label": "題目", "key": "qs" },
+                      { "label": "答案", "key": "ans" }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "選擇測驗",
+                "type": "list",
+                "id": "N4gram",
+                "enabled": true,
+                "modes": [
+                  {
+                    "id": "n4_gram_mcq",
+                    "type": "mcq",
+                    "name": "文法練習 (選擇)",
+                    "enabled": true,
+                    "q_field": "qs",
+                    "a_field": "ans",
+                    "back_fields": [
+                      { "label": "題目", "key": "qs" },
+                      { "label": "答案", "key": "ans" }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -322,7 +363,7 @@
                 "id": "N5",
                 "enabled": true,
                 "modes": [
-                   {
+                  {
                     "id": "n5_mcq_kanji_def",
                     "type": "mcq",
                     "name": "選擇測驗 (中=>日)",

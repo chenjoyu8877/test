@@ -575,7 +575,7 @@ function setupApp() {
         
         const answerLabelData = BACK_CARD_FIELDS.find(f => f.key === ANSWER_FIELD);
         const answerLabel = answerLabelData ? answerLabelData.label : "答案";
-        answerInput.placeholder = `請輸入 ${answerLabel}`;
+        answerInput.placeholder = `請輸入 ${answerLabel}(多個答案用、分隔)`;
         
         if (answerInput) answerInput.focus();
         
