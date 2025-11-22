@@ -88,30 +88,23 @@ function shuffleArray(array) {
 function findListById(items) {
     if (!items) return;
     for (const item of items) {
-        // 注意：如果 JSON 中有多個項目的 ID 相同（例如 N3 有三個項目），
-        // 這裡會發生覆蓋，只保留最後一個。
-        // 但這不影響 fetch 資料，因為 ID 是一樣的。
-        // 影響的是 mode 的查找，所以我們需要下面的 findModeRecursive。
         allListConfigs[item.id] = item;
         if (item.type === 'category' || item.type === 'list') {
-             // 修改：有些結構 list 下面可能還有 items (雖然不常見)，或者 category 下面有 items
              if(item.items) findListById(item.items);
         }
     }
 }
 
-// ⭐️ 新增輔助函式：全域遞迴搜尋模式設定 (解決重複 List ID 覆蓋問題)
+// 輔助函式：全域遞迴搜尋模式設定
 function findModeRecursive(items, targetModeId) {
     if (!items || !Array.isArray(items)) return null;
 
     for (const item of items) {
-        // 1. 如果是 List，檢查裡面的 modes
         if (item.type === 'list' && item.modes) {
             const foundMode = item.modes.find(m => m.id === targetModeId);
             if (foundMode) return foundMode;
         }
         
-        // 2. 如果是 Category (或任何有 items 的結構)，遞迴搜尋子項目
         if (item.items) {
             const foundInChild = findModeRecursive(item.items, targetModeId);
             if (foundInChild) return foundInChild;
@@ -158,7 +151,7 @@ async function loadExternalConfig(path) {
     }
 }
 
-// --- 2. 非同步讀取 ---
+// --- 初始化與設定 ---
 async function initializeQuiz() {
     try {
         const configResponse = await fetch('config.json?v=' + new Date().getTime());
@@ -204,7 +197,7 @@ async function initializeQuiz() {
         return;
     }
 
-    // 4. 模式選擇區 (單一列表)
+    // 模式選擇區 (單一列表)
     if (!modeId) {
         if (listConfig.type !== 'list') {
             window.location.href = 'index.html';
@@ -229,7 +222,7 @@ async function initializeQuiz() {
         return;
     }
     
-    // 5. 多選流程處理入口
+    // 多選流程處理入口
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'INITIATE_SELECT') {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
@@ -237,7 +230,7 @@ async function initializeQuiz() {
         return;
     }
     
-    // 5.5. 綜合測驗區的返回
+    // 綜合測驗區的返回
     if (listName === 'MULTI_SELECT_ENTRY' && modeId === 'RESUME_MULTI') {
         multiSelectEntryConfig = listConfig;
         hideAllSetupAreas();
@@ -249,14 +242,13 @@ async function initializeQuiz() {
         return;
     }
     
-    // 6. 載入數據
+    // 載入數據
     const selectedIdsFromUrl = params.get('selected_ids');
     let listIdsToLoad = [];
     let modeConfig = null;
 
     if (selectedIdsFromUrl) {
         listIdsToLoad = selectedIdsFromUrl.split(',');
-        // 嘗試先從 current listConfig 找，找不到再遞迴
         modeConfig = listConfig.modes ? listConfig.modes.find(m => m.id === modeId) : null;
         if (!modeConfig) {
              modeConfig = findModeRecursive(initialConfig.catalog, modeId);
@@ -264,11 +256,8 @@ async function initializeQuiz() {
         multiSelectEntryConfig = listConfig;
     } else if (listName !== 'MULTI_SELECT_ENTRY') {
         listIdsToLoad = [listName];
-        
-        // ⭐️ 修改：使用全域遞迴搜尋來找模式，確保即使 list ID 重複也能找到正確的 mode
         modeConfig = findModeRecursive(initialConfig.catalog, modeId);
         
-        // 備用：如果全域找不到，才嘗試用舊方法 (通常不會發生)
         if (!modeConfig && listConfig.modes) {
             modeConfig = listConfig.modes.find(m => m.id === modeId);
         }
@@ -309,11 +298,9 @@ async function initializeQuiz() {
             backToSetupUrl = `quiz.html?list=${listName}&mode_id=${modeId}`;
         }
         
-        // 9. 設定通用返回按鈕連結 (預設回設定頁)
         const returnButtons = document.querySelectorAll('.button-return');
         returnButtons.forEach(btn => btn.href = backToSetupUrl);
 
-        // 計算回到首頁列表的連結 (給 Review 模式用)
         const parentHash = findParentHash(initialConfig.catalog, listName);
         const backToCategoryUrl = parentHash ? `index.html${parentHash}` : 'index.html';
 
@@ -329,9 +316,9 @@ async function initializeQuiz() {
             const mainAreaReturnBtn = mainArea.querySelector('.button-return');
             if (mainAreaReturnBtn) {
                 if (selectedIdsFromUrl) {
-                    mainAreaReturnBtn.href = backToSetupUrl; // 多選回多選選單
+                    mainAreaReturnBtn.href = backToSetupUrl;
                 } else {
-                    mainAreaReturnBtn.href = backToCategoryUrl; // 單選回首頁列表
+                    mainAreaReturnBtn.href = backToCategoryUrl;
                 }
             }
             
@@ -340,9 +327,6 @@ async function initializeQuiz() {
             isExamMode = false;
             practiceExamChoiceArea.style.display = 'block';
             
-            // 注意：listConfig 可能因為 ID 重複而是錯誤的那個物件，但 fetch id 是一樣的
-            // 這裡顯示的名字可能會是 "選擇測驗" (如果那是 JSON 裡最後一個該 ID 的項目名稱)
-            // 如果您很介意標題，可以用 modeConfig 的父層名稱，但比較複雜。目前先維持這樣。
             practiceExamTitle.textContent = `${listConfig.name} - ${modeConfig.name}`;
             
             if (singleListSummary) {
@@ -356,13 +340,12 @@ async function initializeQuiz() {
                 singleListSummary.textContent = summaryText;
             }
 
-            // ⭐️ Practice Choice 的返回 -> 回上一層 (首頁/多選選單) ⭐️
             const practiceExamReturnBtn = practiceExamChoiceArea.querySelector('.button-return');
             if (practiceExamReturnBtn) {
                 if (selectedIdsFromUrl) {
-                    practiceExamReturnBtn.href = backToSetupUrl; // 多選回多選模式選擇
+                    practiceExamReturnBtn.href = backToSetupUrl;
                 } else {
-                    practiceExamReturnBtn.href = backToCategoryUrl; // 單選回首頁列表
+                    practiceExamReturnBtn.href = backToCategoryUrl;
                 }
             }
 
@@ -434,7 +417,6 @@ function setupMultiSelect() {
         setupMultiModeChoice();
     };
     
-    // ⭐️ 新增：設定「選擇單字庫頁面」的返回上一層按鈕 ⭐️
     const parentHash = findParentHash(config.catalog, 'MULTI_SELECT_ENTRY');
     const returnBtn = multiSelectArea.querySelector('.button-return');
     if (returnBtn) {
@@ -581,7 +563,7 @@ function setupApp() {
         
     } else if (currentMode === 'mcq') {
         if(quizInputArea) quizInputArea.style.display = 'none';
-        if(mcqOptionsArea) mcqOptionsArea.style.display = 'flex';
+        if(mcqOptionsArea) mcqOptionsArea.style.display = 'flex'; // 這裡使用 flex，我們會動態修改其樣式
         if(giveUpButton) giveUpButton.style.display = 'none';
     } else {
         if(quizInputArea) quizInputArea.style.display = 'none';
@@ -772,49 +754,37 @@ function handleButtonPress() {
     }
 }
 
+// 按鍵處理函式
 function handleGlobalKey(event) {
     const isTyping = (currentMode === 'quiz' && document.activeElement === answerInput);
 
     if (event.key === 'Enter') {
         event.preventDefault();
-        
         if (examSetupArea.style.display === 'block' && startExamFinalBtn) {
             startExamFinalBtn.click();
             return;
         }
-
         if (!nextButton.disabled) {
              handleButtonPress();
         }
         return;
     }
     
-    if (currentMode === 'mcq' && !nextButton.disabled) {
-        const keyMap = {
-            'q': 0, 'w': 1, 'e': 2, 'r': 3,
-            'Q': 0, 'W': 1, 'E': 2, 'R': 3,
-            '1': 0, '2': 1, '3': 2, '4': 3,
-            'Numpad1': 0, 'Numpad2': 1, 'Numpad3': 2, 'Numpad4': 3
-        };
-        
-        const key = event.key;
-        const optionIndex = keyMap[key];
-        
-        if (optionIndex !== undefined) {
-            event.preventDefault();
-            const optionButtons = mcqOptionsArea.querySelectorAll('.mcq-option');
-            if (optionIndex < optionButtons.length) {
-                handleMcqAnswer(optionButtons[optionIndex]);
+    if (currentMode === 'mcq') {
+        if (event.key >= "1" && event.key <= "4") {
+            const index = parseInt(event.key, 10) - 1;
+            const options = document.querySelectorAll('.mcq-option');
+            if (options[index]) {
+                options[index].click();
+                event.preventDefault(); 
             }
-            return;
         }
     }
 
     if (event.key === 'Shift') {
-        if (isTyping) return;
+        if (isTyping) return; 
         event.preventDefault();
-        flipCard();
-        return;
+        flipCard(); 
     }
 }
 
@@ -866,6 +836,7 @@ function triggerNextCardAction() {
     }
 }
 
+// ⭐️ 修改過的生成選項函式：1. Grid 佈局 2. 數字前綴
 function generateMcqOptions() {
     const correctAnswer = currentCorrectAnswer;
     let distractors = [];
@@ -890,11 +861,19 @@ function generateMcqOptions() {
         [options[i], options[j]] = [options[j], options[i]];
     }
     mcqOptionsArea.innerHTML = '';
+
+    // ⭐️ 強制設定為 Grid 兩欄排版
+    mcqOptionsArea.style.display = 'grid';
+    mcqOptionsArea.style.gridTemplateColumns = '1fr 1fr';
+    mcqOptionsArea.style.gap = '15px'; // 按鈕間距
     
-    options.forEach((option) => {
+    options.forEach((option, index) => { // ⭐️ 加入 index 參數
         const button = document.createElement('button');
         button.className = 'mcq-option';
-        button.textContent = option;
+        
+        // ⭐️ 修改按鈕文字：加入 "1. " "2. " ... 前綴
+        button.textContent = `${index + 1}. ${option}`;
+        
         button.dataset.answer = option;
         button.addEventListener('click', (event) => handleMcqAnswer(event.target));
         mcqOptionsArea.appendChild(button);
