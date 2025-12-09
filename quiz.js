@@ -63,8 +63,11 @@ let currentCardData = {};
 let QUESTION_FIELD = '';
 let ANSWER_FIELD = '';
 let BACK_CARD_FIELDS = [];
-let vocabulary = [];
-let originalVocabulary = []; 
+
+let vocabulary = [];          // 當前測驗用的題庫 (會變動、被刪除)
+let originalVocabulary = [];  // 用於重置練習/考試的備份
+let globalOptionPool = [];    // ⭐️ 新增：總選項庫 (永遠完整，用於生成 MCQ 選項)
+
 let currentCardIndex = 0;
 let currentCorrectAnswer = "";
 let currentMode = 'review';
@@ -294,6 +297,9 @@ async function initializeQuiz() {
     if (vocabulary.length > 0) {
         // 備份原始單字庫
         originalVocabulary = JSON.parse(JSON.stringify(vocabulary));
+        
+        // ⭐️ 新增：初始化選項池 (用於生成 MCQ 選項)
+        globalOptionPool = [...vocabulary];
 
         let backToSetupUrl;
         if (selectedIdsFromUrl) {
@@ -727,7 +733,7 @@ function checkAnswer() {
     if (!userInputRaw) {
         answerInput.classList.add('shake');
         setTimeout(() => answerInput.classList.remove('shake'), 500);
-        // ⭐️ 空白輸入不算錯，直接返回，保留 clean state
+        // 空白輸入不算錯，直接返回，保留 clean state
         return;
     }
 
@@ -746,7 +752,7 @@ function checkAnswer() {
         answerInput.classList.remove('incorrect');
         answerInput.disabled = true;
         
-        // ⭐️ 練習模式：只有在「從沒錯過」(clean state) 的情況下才刪除單字
+        // 練習模式：只有在「從沒錯過」(clean state) 的情況下才刪除單字
         if (!isExamMode && !currentCardMarkedWrong) {
             vocabulary.splice(currentCardIndex, 1);
             updateExamProgress(); 
@@ -762,7 +768,7 @@ function checkAnswer() {
         answerInput.classList.add('shake');
         setTimeout(() => answerInput.classList.remove('shake'), 500);
         
-        // ⭐️ 答錯了！標記此卡片為「已髒」，這回合不能刪除，必須下次重來
+        // 答錯了！標記此卡片為「已髒」，這回合不能刪除，必須下次重來
         if (!currentCardMarkedWrong) {
             currentCardMarkedWrong = true;
             if (isExamMode) {
@@ -781,7 +787,7 @@ function checkAnswer() {
 function revealAnswer() {
     if (currentMode === 'quiz' && !flashcard.classList.contains('is-flipped')) {
         
-        // ⭐️ 偷看答案（我不會）也算錯！標記為「已髒」
+        // 偷看答案（我不會）也算錯！標記為「已髒」
         if (!currentCardMarkedWrong) {
             currentCardMarkedWrong = true;
             
@@ -923,29 +929,39 @@ function triggerNextCardAction() {
     }
 }
 
+// ⭐️ 修正後的 MCQ 選項生成 (使用 globalOptionPool)
 function generateMcqOptions() {
     const correctAnswer = currentCorrectAnswer;
     let distractors = [];
     let options = [];
-    const numDistractorsToFind = Math.min(3, vocabulary.length - 1);
+    
+    // ⭐️ 修改 1: 使用 globalOptionPool 作為來源
+    const numDistractorsToFind = Math.min(3, globalOptionPool.length - 1);
+    
     let retries = 0;
     const maxRetries = 20;
 
     while (distractors.length < numDistractorsToFind && retries < maxRetries) {
         retries++;
-        const randomIndex = Math.floor(Math.random() * vocabulary.length);
-        const randomWord = vocabulary[randomIndex];
+        
+        // ⭐️ 修改 2: 從 globalOptionPool 隨機抽取
+        const randomIndex = Math.floor(Math.random() * globalOptionPool.length);
+        const randomWord = globalOptionPool[randomIndex];
+        
         if (!randomWord[ANSWER_FIELD]) continue;
         const distractor = randomWord[ANSWER_FIELD];
+        
         if (distractor === correctAnswer) continue;
         if (distractors.includes(distractor)) continue;
         distractors.push(distractor);
     }
     options = [correctAnswer, ...distractors];
+    
     for (let i = options.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [options[i], options[j]] = [options[j], options[i]];
     }
+    
     mcqOptionsArea.innerHTML = '';
 
     mcqOptionsArea.style.display = 'grid';
@@ -979,7 +995,7 @@ function handleMcqAnswer(selectedButton) {
         
         selectedButton.classList.add('correct'); 
 
-        // ⭐️ 練習模式答對：必須是「清白之身」才刪除
+        // 練習模式答對：必須是「清白之身」才刪除
         if (!isExamMode && !currentCardMarkedWrong) {
             vocabulary.splice(currentCardIndex, 1);
             updateExamProgress(); 
@@ -998,7 +1014,7 @@ function handleMcqAnswer(selectedButton) {
         
         selectedButton.classList.add('incorrect');
         
-        // ⭐️ 答錯了！標記為「已髒」
+        // 答錯了！標記為「已髒」
         if (!currentCardMarkedWrong) {
             currentCardMarkedWrong = true;
             if (isExamMode) {
