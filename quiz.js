@@ -733,7 +733,6 @@ function checkAnswer() {
     if (!userInputRaw) {
         answerInput.classList.add('shake');
         setTimeout(() => answerInput.classList.remove('shake'), 500);
-        // 空白輸入不算錯，直接返回，保留 clean state
         return;
     }
 
@@ -747,7 +746,9 @@ function checkAnswer() {
     });
     
     if (isCorrect) {
-        answerInput.value = correctAnswers[0].trim();
+        // ❌ 移除這行 (原本會把你的輸入強制改成標準答案)
+        // answerInput.value = correctAnswers[0].trim(); 
+
         answerInput.classList.add('correct');
         answerInput.classList.remove('incorrect');
         answerInput.disabled = true;
@@ -763,12 +764,12 @@ function checkAnswer() {
         if (giveUpButton) giveUpButton.style.display = 'none';
         flipCard();
     } else {
+        // (答錯的部分不用改，保持原狀)
         answerInput.classList.add('incorrect');
         answerInput.classList.remove('correct');
         answerInput.classList.add('shake');
         setTimeout(() => answerInput.classList.remove('shake'), 500);
         
-        // 答錯了！標記此卡片為「已髒」，這回合不能刪除，必須下次重來
         if (!currentCardMarkedWrong) {
             currentCardMarkedWrong = true;
             if (isExamMode) {
@@ -787,7 +788,7 @@ function checkAnswer() {
 function revealAnswer() {
     if (currentMode === 'quiz' && !flashcard.classList.contains('is-flipped')) {
         
-        // 偷看答案（我不會）也算錯！標記為「已髒」
+        // 標記錯誤邏輯 (保持不變)
         if (!currentCardMarkedWrong) {
             currentCardMarkedWrong = true;
             
@@ -799,11 +800,16 @@ function revealAnswer() {
                 });
             }
         }
-        updateExamProgress(); // 更新計分板（練習模式沒差，考試模式有差）
+        updateExamProgress();
+
+        // ⭐️ 修改這裡：只有當「輸入框是空的」時候，才自動填入答案
+        // 如果你裡面有打字 (不管是錯的還是怎樣)，就保留它
+        if (answerInput.value.trim() === "") {
+            answerInput.value = currentCorrectAnswer.split('/')[0].trim();
+        }
         
-        answerInput.value = currentCorrectAnswer.split('/')[0].trim();
-        answerInput.classList.remove('incorrect');
-        answerInput.disabled = true;
+        answerInput.classList.remove('incorrect'); // 可以選擇移除紅色，或保留紅色讓你知道是錯的
+        answerInput.disabled = true; // 鎖定輸入框，不能再改
         
         flipCard();
         nextButton.textContent = "下一張";
@@ -811,7 +817,6 @@ function revealAnswer() {
         if (giveUpButton) giveUpButton.style.display = 'none';
     }
 }
-
 
 function handleButtonPress() {
     const buttonState = nextButton.textContent;
