@@ -633,10 +633,15 @@ function toggleOperationNotes() {
 }
 
 async function loadNextCard() {
+    // 重置卡片樣式
     if (flashcard) {
         flashcard.style.boxShadow = '';
         flashcard.style.border = '';
     }
+
+    // ⭐️ 新增：重置 Diff 比對顯示區域
+    const diffContainer = document.getElementById('diff-result');
+    if (diffContainer) diffContainer.innerHTML = '';
 
     if (isExamMode && examCurrentQuestion >= examTotalQuestions) {
         showExamResults();
@@ -648,6 +653,7 @@ async function loadNextCard() {
         return;
     }
     
+    // 如果卡片是翻開的，先翻回來
     if (flashcard.classList.contains('is-flipped')) {
         flashcard.classList.remove('is-flipped');
         await new Promise(resolve => setTimeout(resolve, 610));
@@ -663,8 +669,6 @@ async function loadNextCard() {
         newIndex = examCurrentQuestion - 1;
     } else {
         updateExamProgress();
-        
-        // 每次新卡片，重置「已髒」標記
         currentCardMarkedWrong = false;
 
         const oldIndex = currentCardIndex;
@@ -708,6 +712,8 @@ async function loadNextCard() {
         answerInput.value = "";
         answerInput.disabled = false;
         answerInput.classList.remove('correct', 'incorrect');
+        
+        // 確保按鈕文字正確
         nextButton.textContent = "檢查答案";
         nextButton.disabled = false;
         if (answerInput) answerInput.focus();
@@ -737,39 +743,47 @@ function checkAnswer() {
     }
 
     const normalizedInput = normalizeString(userInputRaw);
-    
-    let isCorrect = false;
     let correctAnswers = currentCorrectAnswer.split('/').map(s => s.trim());
     
-    isCorrect = correctAnswers.some(answer => {
-        return normalizeString(answer) === normalizedInput;
-    });
-    
-    if (isCorrect) {
-        // ❌ 移除這行 (原本會把你的輸入強制改成標準答案)
-        // answerInput.value = correctAnswers[0].trim(); 
+    // 檢查答案是否正確
+    const isCorrect = correctAnswers.some(answer => normalizeString(answer) === normalizedInput);
+    const diffContainer = document.getElementById('diff-result');
 
+    if (isCorrect) {
+        // --- 🟢 答對了 ---
         answerInput.classList.add('correct');
         answerInput.classList.remove('incorrect');
-        answerInput.disabled = true;
+        answerInput.disabled = true; // 鎖定
         
-        // 練習模式：只有在「從沒錯過」(clean state) 的情況下才刪除單字
+        // 練習模式且「從未試錯過」才刪除
         if (!isExamMode && !currentCardMarkedWrong) {
             vocabulary.splice(currentCardIndex, 1);
             updateExamProgress(); 
         }
 
+        if(diffContainer) diffContainer.innerHTML = ''; // 清空比對區
+
         nextButton.textContent = "下一張";
         nextButton.disabled = false;
+        
+        // 隱藏「我不會」按鈕
         if (giveUpButton) giveUpButton.style.display = 'none';
-        flipCard();
+        
+        flipCard(); // 翻開卡片
+
     } else {
-        // (答錯的部分不用改，保持原狀)
+        // --- 🔴 答錯了 (給予重試機會) ---
         answerInput.classList.add('incorrect');
         answerInput.classList.remove('correct');
+        
+        // 震動回饋
         answerInput.classList.add('shake');
         setTimeout(() => answerInput.classList.remove('shake'), 500);
         
+        // ⭐️ 關鍵：這裡「不」鎖定、「不」翻卡、「不」顯示 Diff
+        // 讓使用者可以刪除文字重新輸入
+        
+        // 但必須標記此題已髒 (考試模式扣分，練習模式保留單字)
         if (!currentCardMarkedWrong) {
             currentCardMarkedWrong = true;
             if (isExamMode) {
@@ -781,17 +795,21 @@ function checkAnswer() {
             }
         }
         
+        // 確保「我不會」按鈕是顯示的，讓使用者真的想放棄時可以按
         if (giveUpButton) giveUpButton.style.display = 'inline-block';
+        
+        // 聚焦回輸入框，方便直接修改
+        answerInput.focus();
     }
 }
 
 function revealAnswer() {
+    // 只有在測驗模式且卡片還沒翻開時有效
     if (currentMode === 'quiz' && !flashcard.classList.contains('is-flipped')) {
         
-        // 標記錯誤邏輯 (保持不變)
+        // 標記錯誤 (如果之前沒試錯過，現在放棄也算錯)
         if (!currentCardMarkedWrong) {
             currentCardMarkedWrong = true;
-            
             if (isExamMode) {
                 examIncorrectCount++;
                 examIncorrectWords.push({
@@ -801,19 +819,36 @@ function revealAnswer() {
             }
         }
         updateExamProgress();
+        
+        const diffContainer = document.getElementById('diff-result');
+        const userInputRaw = answerInput.value.trim();
+        const mainCorrectAnswer = currentCorrectAnswer.split('/')[0].trim();
 
-        // ⭐️ 修改這裡：只有當「輸入框是空的」時候，才自動填入答案
-        // 如果你裡面有打字 (不管是錯的還是怎樣)，就保留它
-        if (answerInput.value.trim() === "") {
-            answerInput.value = currentCorrectAnswer.split('/')[0].trim();
+        // ⭐️ 關鍵邏輯：
+        // 放棄時，系統會看你「現在輸入框裡留著什麼」來做比對
+        
+        if (userInputRaw !== "") {
+            // 情況 A：你有嘗試打字，但最後放棄 -> 顯示 Diff (你的答案 vs 正確答案)
+            if (diffContainer) {
+                const diffHtml = generateDiffHtml(userInputRaw, mainCorrectAnswer);
+                diffContainer.innerHTML = `比對：${diffHtml}`;
+            }
+        } else {
+            // 情況 B：你完全空白就放棄 -> 直接幫你填入正確答案，不顯示 Diff
+            answerInput.value = mainCorrectAnswer;
+            if (diffContainer) diffContainer.innerHTML = "";
         }
         
-        answerInput.classList.remove('incorrect'); // 可以選擇移除紅色，或保留紅色讓你知道是錯的
-        answerInput.disabled = true; // 鎖定輸入框，不能再改
+        // 鎖定介面
+        answerInput.classList.remove('incorrect'); // 移除紅色錯誤框，避免干擾閱讀
+        answerInput.disabled = true; // 鎖定輸入
         
-        flipCard();
+        flipCard(); // 翻開卡片看詳解
+        
         nextButton.textContent = "下一張";
         nextButton.disabled = false;
+        
+        // 放棄按鈕隱藏
         if (giveUpButton) giveUpButton.style.display = 'none';
     }
 }
@@ -1157,6 +1192,47 @@ function showPracticeComplete() {
         mainArea.style.display = 'flex';
         setupApp();
     });
+}
+// ⭐️ 新增：簡易 Diff 演算法 (LCS 實作)
+// 回傳 HTML 字串：刪除的部分用 .diff-del 包裹，新增的部分用 .diff-ins 包裹
+function generateDiffHtml(oldStr, newStr) {
+    // 簡單的正規化
+    oldStr = normalizeString(oldStr);
+    newStr = normalizeString(newStr);
+
+    const m = oldStr.length;
+    const n = newStr.length;
+    
+    // 建立 LCS 矩陣
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            if (oldStr[i - 1] === newStr[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+
+    // 回溯產生 Diff
+    let i = m, j = n;
+    let html = '';
+    
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && oldStr[i - 1] === newStr[j - 1]) {
+            html = `<span class="diff-common">${oldStr[i - 1]}</span>` + html;
+            i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+            html = `<span class="diff-ins">${newStr[j - 1]}</span>` + html;
+            j--;
+        } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
+            html = `<span class="diff-del">${oldStr[i - 1]}</span>` + html;
+            i--;
+        }
+    }
+    return html;
 }
 
 initializeQuiz();

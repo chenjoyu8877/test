@@ -571,3 +571,34 @@ button.mcq-option.incorrect {
 .setup-container h1 {
     margin-top: 10px; 
 }
+/* --- 差異比對樣式 --- */
+#diff-result {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    line-height: 1.5;
+    min-height: 24px;
+    font-weight: bold;
+}
+
+/* 刪除 (你打錯/多打的字) - 紅色背景 + 刪除線 */
+.diff-del {
+    background-color: #ffcccc;
+    color: #cc0000;
+    text-decoration: line-through;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* 新增 (你漏掉/正確的字) - 綠色背景 */
+.diff-ins {
+    background-color: #ccffcc;
+    color: #008800;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* 沒變的字 - 灰色 */
+.diff-common {
+    color: #333;
+}
