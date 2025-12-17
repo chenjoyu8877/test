@@ -418,9 +418,20 @@ button.mcq-option {
 button.mcq-option:focus {
     outline: none;
 }
-button.mcq-option:hover:not(:disabled) {
-    border-color: #4a90e2;
-    background-color: #f7faff;
+/* ✅ 新的寫法 (只有電腦滑鼠懸停時才變色，手機點擊不會變) */
+@media (hover: hover) {
+    button.mcq-option:hover:not(:disabled) {
+        border-color: #4a90e2;
+        background-color: #f7faff;
+    }
+}
+
+/* 額外保險：強制點擊瞬間 (Active) 也不要有外框 */
+button.mcq-option:active {
+    background-color: #f0f0f0; /* 點下去稍微變灰就好，不要變藍 */
+    border-color: #ddd;        /* 邊框維持灰色 */
+    outline: none !important;
+    box-shadow: none !important;
 }
 button.mcq-option:disabled {
     cursor: not-allowed;
