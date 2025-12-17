@@ -15,6 +15,11 @@
       "name": "讀本",
       "type": "external_category",
       "path": "configs/reader_config.json"
+    },
+    {
+      "name": "語法期中",
+      "type": "external_category",
+      "path": "configs/bunbou1_config.json"
     }
   ]
 }

@@ -135,6 +135,8 @@ h1 { color: #444; }
 .option-button.quiz-mode:hover { background-color: #409182; }
 .option-button.mcq-mode { background-color: #8e44ad; }
 .option-button.mcq-mode:hover { background-color: #732d91; }
+.option-button.mixed-mode { background-color: #f39c12; }
+.option-button.mixed-mode:hover { background-color: #d35400; }
 
 
 /* --- 3. ⭐️ 測驗頁 (quiz.html) 樣式 ⭐️ --- */

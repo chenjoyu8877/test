@@ -71,6 +71,10 @@ let globalOptionPool = [];    // ⭐️ 新增：總選項庫 (永遠完整，�
 let currentCardIndex = 0;
 let currentCorrectAnswer = "";
 let currentMode = 'review';
+
+// ⭐️ 新增：紀錄最原始的模式類型 (用於 Mixed 判斷)
+let originalModeType = ''; 
+
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -275,6 +279,9 @@ async function initializeQuiz() {
     if (!modeConfig) { throw new Error(`找不到模式 ID: ${modeId}`); }
 
     currentMode = modeConfig.type;
+    // ⭐️ 關鍵修改：保存原始模式類型 (如 'mixed')
+    originalModeType = modeConfig.type;
+
     QUESTION_FIELD = modeConfig.q_field;
     ANSWER_FIELD = modeConfig.a_field || '';
     BACK_CARD_FIELDS = modeConfig.back_fields || [];
@@ -316,6 +323,7 @@ async function initializeQuiz() {
 
         modeChoiceArea.style.display = 'none';
         
+        // ⭐️ 關鍵修改：只有 Review 模式直接進入，Mixed 模式現在進入 else (顯示考試選單)
         if (currentMode === 'review') {
             isExamMode = false;
             examSetupArea.style.display = 'none';
@@ -334,6 +342,7 @@ async function initializeQuiz() {
             
             setupApp();
         } else {
+            // Quiz, MCQ, Mixed 都會來到這裡
             isExamMode = false;
             practiceExamChoiceArea.style.display = 'block';
             
@@ -555,13 +564,13 @@ function updateOperationNotes() {
             <li>**Enter**：檢查答案 / 下一張。</li>
             <li>**Tab** / **Esc**：我不會 (顯示答案)。</li>
             <li>**Shift**：切換中英/大寫 (無特殊功能)。</li>
-            <li>點擊卡片：無功能。</li>
+            <li>點擊卡片：<span style="color:red;">作答期間禁止</span>。</li>
         `;
     } else if (currentMode === 'mcq') {
         html = `
             <li>**1~4**：選擇答案 (對應選項)。</li>
             <li>**Shift**：<span style="color:red;">已停用</span>。</li>
-            <li>答對自動下一題，答錯顯示答案。</li>
+            <li>點擊卡片：<span style="color:red;">作答期間禁止</span>。</li>
         `;
     } else {
         html = `
@@ -594,6 +603,7 @@ function setupApp() {
         operationToggle.addEventListener('click', toggleOperationNotes);
     }
     
+    // ⭐️ 確保在 Setup 時根據模式顯示正確的 UI
     if (currentMode === 'quiz') {
         if(quizInputArea) quizInputArea.style.display = 'block';
         if(mcqOptionsArea) mcqOptionsArea.style.display = 'none';
@@ -633,13 +643,50 @@ function toggleOperationNotes() {
 }
 
 async function loadNextCard() {
+    // ⭐️ 關鍵修改：混合模式邏輯 (Mixed Mode Logic) ⭐️
+    if (originalModeType === 'mixed') {
+        // 1. 隨機決定這一題是 "quiz" (填空) 還是 "mcq" (選擇)
+        const randomMode = Math.random() < 0.5 ? 'quiz' : 'mcq';
+        currentMode = randomMode;
+        
+        // 2. 自動切換欄位 (針對您的 bunbou1 結構：填空用 qus-1，選擇用 qus-2)
+        if (currentMode === 'quiz') {
+            QUESTION_FIELD = 'qus-1';
+            ANSWER_FIELD = 'ans-1';
+        } else {
+            QUESTION_FIELD = 'qus-2';
+            ANSWER_FIELD = 'ans-2';
+        }
+        
+        // 3. 動態切換介面顯示
+        if (currentMode === 'quiz') {
+            quizInputArea.style.display = 'block';
+            mcqOptionsArea.style.display = 'none';
+            if(giveUpButton) giveUpButton.style.display = 'inline-block';
+            nextButton.textContent = "檢查答案";
+            
+            // 更新 placeholder
+            const answerLabelData = BACK_CARD_FIELDS.find(f => f.key === ANSWER_FIELD);
+            const answerLabel = answerLabelData ? answerLabelData.label : "答案";
+            answerInput.placeholder = `請輸入 ${answerLabel}`;
+
+        } else {
+            quizInputArea.style.display = 'none';
+            mcqOptionsArea.style.display = 'flex';
+            if(giveUpButton) giveUpButton.style.display = 'none';
+        }
+        
+        // 更新操作說明文字
+        updateOperationNotes();
+    }
+
     // 重置卡片樣式
     if (flashcard) {
         flashcard.style.boxShadow = '';
         flashcard.style.border = '';
     }
 
-    // ⭐️ 新增：重置 Diff 比對顯示區域
+    // 重置 Diff 比對顯示區域
     const diffContainer = document.getElementById('diff-result');
     if (diffContainer) diffContainer.innerHTML = '';
 
@@ -688,6 +735,17 @@ async function loadNextCard() {
     if (!card) return; 
 
     currentCardData = card;
+
+    // ⭐️ 雙重保險：如果切換到該模式但該欄位沒資料，嘗試切回另一種
+    if (originalModeType === 'mixed' && !card[QUESTION_FIELD]) {
+         if (currentMode === 'mcq' && card['qus-1']) {
+             currentMode = 'quiz';
+             QUESTION_FIELD = 'qus-1';
+             ANSWER_FIELD = 'ans-1';
+             quizInputArea.style.display = 'block';
+             mcqOptionsArea.style.display = 'none';
+         }
+    }
 
     cardFront.textContent = card[QUESTION_FIELD] || "";
     currentCorrectAnswer = card[ANSWER_FIELD] || "";
@@ -921,9 +979,28 @@ function handleGlobalKey(event) {
     }
 }
 
+// ⭐️ 修正後的 flipCard (加入防偷看邏輯)
 function flipCard() {
-    const wasFlipped = flashcard.classList.contains('is-flipped');
+    // 🛡️ 防偷看邏輯：
+    // 如果是 Quiz 或 MCQ 模式 (無論是練習還是考試)，在還沒作答完成前，禁止翻開卡片背面。
+    // 判斷標準：
+    // 1. Quiz: 輸入框沒被鎖定 (!answerInput.disabled) 代表還沒答對或放棄。
+    // 2. MCQ: 下一題按鈕被鎖定 (nextButton.disabled) 代表還沒選出結果。
     
+    if (currentMode === 'quiz' || currentMode === 'mcq') {
+        // 只有當卡片「目前是正面」且「還沒答完」時，才攔截。
+        // (如果卡片已經是背面，允許點擊翻回正面看題目)
+        if (!flashcard.classList.contains('is-flipped')) {
+             if (currentMode === 'quiz' && !answerInput.disabled) {
+                 return; // 禁止翻頁
+             }
+             if (currentMode === 'mcq' && nextButton.disabled) {
+                 return; // 禁止翻頁
+             }
+        }
+    }
+
+    const wasFlipped = flashcard.classList.contains('is-flipped');
     flashcard.classList.toggle('is-flipped');
     
     if (wasFlipped && !flashcard.classList.contains('is-flipped')) {
@@ -969,41 +1046,57 @@ function triggerNextCardAction() {
     }
 }
 
-// ⭐️ 修正後的 MCQ 選項生成 (使用 globalOptionPool)
+// ⭐️ 修正後的 MCQ 選項生成 (防止重複答案出現)
 function generateMcqOptions() {
     const correctAnswer = currentCorrectAnswer;
-    let distractors = [];
-    let options = [];
     
-    // ⭐️ 修改 1: 使用 globalOptionPool 作為來源
-    const numDistractorsToFind = Math.min(3, globalOptionPool.length - 1);
+    // 1. 準備一個 Set 來記錄「已經選用的答案文字」
+    // 用途：確保選項內不會有重複的文字 (例如已經有「ば」就不會再選另一個「ば」)
+    let usedAnswersSet = new Set();
     
-    let retries = 0;
-    const maxRetries = 20;
+    // 先把「正確答案」正規化後放入 Set，避免錯誤選項跟正確答案長得一樣
+    usedAnswersSet.add(normalizeString(correctAnswer));
 
-    while (distractors.length < numDistractorsToFind && retries < maxRetries) {
+    let distractors = [];
+    let retries = 0;
+    const maxRetries = 50; // 增加嘗試次數，因為重複率高，需要多找幾次
+
+    // 計算我們需要幾個錯誤選項 (最多 3 個，如果題庫太少則減少)
+    // 這裡我們檢查的是 unique 的數量，比較難精確估算，所以主要靠 retry 限制
+    const targetCount = 3;
+
+    while (distractors.length < targetCount && retries < maxRetries) {
         retries++;
         
-        // ⭐️ 修改 2: 從 globalOptionPool 隨機抽取
+        // 從總題庫隨機抽一個
         const randomIndex = Math.floor(Math.random() * globalOptionPool.length);
         const randomWord = globalOptionPool[randomIndex];
         
         if (!randomWord[ANSWER_FIELD]) continue;
-        const distractor = randomWord[ANSWER_FIELD];
         
-        if (distractor === correctAnswer) continue;
-        if (distractors.includes(distractor)) continue;
-        distractors.push(distractor);
+        const distractorText = randomWord[ANSWER_FIELD];
+        const distractorNormalized = normalizeString(distractorText);
+        
+        // ⭐️ 核心判斷：
+        // 如果這個答案的文字，已經在 Set 裡面 (代表跟正確答案一樣，或跟已選的錯誤選項一樣)
+        // 則跳過，重新抽
+        if (usedAnswersSet.has(distractorNormalized)) {
+            continue;
+        }
+        
+        // 如果是新的答案，加入 Set 和 列表
+        usedAnswersSet.add(distractorNormalized);
+        distractors.push(distractorText);
     }
-    options = [correctAnswer, ...distractors];
     
-    for (let i = options.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [options[i], options[j]] = [options[j], options[i]];
-    }
+    // 合併正確答案與錯誤選項
+    let options = [correctAnswer, ...distractors];
     
+    // 洗牌 (打亂順序)
+    shuffleArray(options);
+    
+    // --- 以下是渲染按鈕的程式碼 (保持原本樣式) ---
     mcqOptionsArea.innerHTML = '';
-
     mcqOptionsArea.style.display = 'grid';
     mcqOptionsArea.style.gridTemplateColumns = '1fr 1fr';
     mcqOptionsArea.style.gap = '15px'; 
@@ -1018,7 +1111,6 @@ function generateMcqOptions() {
         mcqOptionsArea.appendChild(button);
     });
 }
-
 function handleMcqAnswer(selectedButton) {
     const selectedAnswer = selectedButton.dataset.answer;
     
@@ -1072,6 +1164,7 @@ function handleMcqAnswer(selectedButton) {
             }
         });
 
+        // 答錯後，啟用「下一張」按鈕，並翻開卡片給使用者看正確答案
         nextButton.disabled = false;
         flipCard(); 
     }
