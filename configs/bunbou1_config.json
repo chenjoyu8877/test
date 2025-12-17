@@ -1,12 +1,12 @@
 [
   {
-    "name": "語法期中",
+    "name": "二上語法期末考練習",
     "type": "category",
     "id": "bunbou_midterm_folder",
     "enabled": true,
     "items": [
       {
-        "name": "第1回 語法練習",
+        "name": "接續助詞",
         "type": "list",
         "id": "bunbou1",
         "enabled": true,
