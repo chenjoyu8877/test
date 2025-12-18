@@ -20,6 +20,12 @@
       "name": "語法期中",
       "type": "external_category",
       "path": "configs/bunbou1_config.json"
+    },
+    {
+      "name": "故事選",
+      "type": "external_category",
+      "path": "configs/story_config.json"
     }
+    
   ]
 }

@@ -1,0 +1,57 @@
+[
+  {
+    "name": "故事選",
+    "type": "category",
+    "id": "story_folder",
+    "enabled": true,
+    "items": [
+      {
+        "name": "單字",
+        "type": "list",
+        "id": "story",
+        "enabled": true,
+        "modes": [
+          {
+            "id": "story_fill_mode",
+            "type": "quiz",
+            "name": "填空題(中=>日) ",
+            "enabled": true,
+            "q_field": "definition",
+            "a_field": "kanji",
+            "back_fields": [
+              { "label": "漢字", "key": "kanji" },
+              { "label": "拼音", "key": "hiragana" },
+              { "label": "中文", "key": "definition" }
+            ]
+          },
+          {
+            "id": "story_fill_mode2",
+            "type": "quiz",
+            "name": "填空題(日=>平假名) ",
+            "enabled": true,
+            "q_field": "kanji",
+            "a_field": "hiragana",
+            "back_fields": [
+              { "label": "漢字", "key": "kanji" },
+              { "label": "拼音", "key": "hiragana" },
+              { "label": "中文", "key": "definition" }
+            ]
+          },
+          {
+            "id": "story_mcq_mode",
+            "type": "mcq",
+            "name": "選擇題 ",
+            "enabled": true,
+            "q_field": "definition",
+            "a_field": "kanji",
+            "back_fields": [
+              { "label": "漢字", "key": "kanji" },
+              { "label": "拼音", "key": "hiragana" },
+              { "label": "中文", "key": "definition" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

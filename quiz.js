@@ -302,6 +302,42 @@ async function initializeQuiz() {
     }
 
     if (vocabulary.length > 0) {
+        
+        // ⭐️ 智慧過濾邏輯 (日文=>平假名模式專用) ⭐️
+        // 如果題目跟答案一樣，且沒有漢字 (純假名)，就過濾掉。
+        // 如果題目跟答案一樣，但有漢字 (中日同形詞)，則保留。
+        
+        const hasKanji = (str) => /[\u4e00-\u9faf]/.test(str);
+        const beforeCount = vocabulary.length;
+        
+        vocabulary = vocabulary.filter(card => {
+            const q = card[QUESTION_FIELD] ? normalizeString(card[QUESTION_FIELD]) : "";
+            const a = card[ANSWER_FIELD] ? normalizeString(card[ANSWER_FIELD]) : "";
+
+            // 1. 內容不完整則過濾
+            if (q === "" || a === "") return false;
+
+            // 2. 題目與答案不同 -> 保留
+            if (q !== a) return true;
+
+            // 3. 題目與答案相同 -> 檢查有無漢字
+            // 有漢字 (如 "学生") -> 保留
+            // 無漢字 (如 "りんご") -> 過濾
+            return hasKanji(q); 
+        });
+
+        const removedCount = beforeCount - vocabulary.length;
+        if (removedCount > 0) {
+            console.log(`已智慧過濾 ${removedCount} 張重複且無漢字的卡片 (送分題)`);
+        }
+
+        // 檢查過濾後是否還有題目
+        if (vocabulary.length === 0) {
+             mainArea.style.display = 'flex';
+             mainArea.innerHTML = `<h1>沒有適合的單字。</h1><p>此模式過濾了所有「題目=答案」且無漢字的單字。</p><p>請嘗試其他模式。</p><a href="index.html" class="home-button">返回主頁面</a>`;
+             return;
+        }
+
         // 備份原始單字庫
         originalVocabulary = JSON.parse(JSON.stringify(vocabulary));
         
