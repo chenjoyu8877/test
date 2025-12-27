@@ -25,7 +25,11 @@
       "name": "故事選",
       "type": "external_category",
       "path": "configs/story_config.json"
+    },
+    {
+      "name": "聽力期末",
+      "type": "external_category",
+      "path": "configs/listen_config.json"
     }
-    
   ]
 }
