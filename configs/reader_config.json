@@ -262,6 +262,44 @@
             ]
           }
         ]
+      },
+      {
+        "name": "期末總複習",
+        "type": "category",
+        "id": "dobenfinal1_joshi",
+        "enabled": true,
+        "items": [
+          
+          {
+            "name": "助詞",
+            "type": "category",
+            "id": "dobenfinal1_joshi_category",
+            "enabled": true,
+            "items": [
+              {
+                "name": "助詞",
+                "type": "list",
+                "id": "dobenfinal1", 
+                "enabled": true,
+                "modes": [                  
+                  {
+                    "id": "dobenfinal1_vocab_quiz",
+                    "type": "quiz",
+                    "name": "助詞填空",
+                    "enabled": true,
+                    "q_field": "qes",
+                    "a_field": "ans",
+                    "back_fields": [
+                      { "label": "題目", "key": "qes" },
+                      { "label": "答案", "key": "ans" }
+                      
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }
